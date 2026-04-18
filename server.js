@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { randomUUID } from 'node:crypto';
+import { OCR_PROMPT, ANALYSIS_PROMPT, videoPromptPrompt } from './prompts.js';
 
 const execFileP = promisify(execFile);
 
@@ -87,7 +88,6 @@ app.post('/upload', upload.single('video'), async (req, res) => {
 
     const frames = fs.readdirSync(framesDir).sort();
 
-    const ocrPrompt = 'If this looks like a screenshot of a chat interface, perform OCR of what the user said. Otherwise, output nothing.';
     const results = await Promise.all(frames.map(async (fname) => {
       const fpath = path.join(framesDir, fname);
       const b64 = fs.readFileSync(fpath).toString('base64');
@@ -96,7 +96,7 @@ app.post('/upload', upload.single('video'), async (req, res) => {
         messages: [{
           role: 'user',
           content: [
-            { type: 'text', text: ocrPrompt },
+            { type: 'text', text: OCR_PROMPT },
             { type: 'image_url', image_url: { url: `data:image/png;base64,${b64}` } },
           ],
         }],
@@ -105,15 +105,10 @@ app.post('/upload', upload.single('video'), async (req, res) => {
     }));
 
     const concatenated = results.map((r) => r.text).join('\n\n---\n\n');
-    const analysisPrompt = `based on what the user said, generate this {
-mbti: ["ISTJ","INTJ","ESTP"],
-description: ["...", "...", "..."],
-thoughts: ["", "", ""],
-}`;
     const analysis = await openai.chat.completions.create({
       model: 'qwen3-30b-a3b',
       messages: [
-        { role: 'user', content: `${analysisPrompt}\n\n---\n\n${concatenated}` },
+        { role: 'user', content: `${ANALYSIS_PROMPT}\n\n---\n\n${concatenated}` },
       ],
     });
     const analysisText = analysis.choices[0]?.message?.content ?? '';
@@ -144,9 +139,37 @@ thoughts: ["", "", ""],
   }
 });
 
-app.get('/generate', (req, res) => {
-  const { mbti, description, thought } = req.query;
-  res.status(500).json({ mbti, description, thought });
+const PLOTS = ['time_capsule', 'prophecy', 'reveal'];
+
+app.get('/generate', async (req, res) => {
+  const { mbti, description } = req.query;
+  const thoughts = [].concat(req.query.thoughts ?? req.query.thought ?? []);
+  const plot_name = req.query.plot || PLOTS[Math.floor(Math.random() * PLOTS.length)];
+  try {
+    const filled = videoPromptPrompt({})
+      .replaceAll('{mbti}', String(mbti ?? ''))
+      .replaceAll('{description}', String(description ?? ''))
+      .replaceAll('{thoughts}', JSON.stringify(thoughts))
+      .replaceAll('{plot_name}', plot_name);
+    const completion = await openai.chat.completions.create({
+      model: 'qwen3-30b-a3b',
+      messages: [{ role: 'user', content: filled }],
+    });
+    const videoPrompt = (completion.choices[0]?.message?.content ?? '').trim();
+    console.log('[generate] plot:', plot_name);
+    console.log('[generate] script:', videoPrompt);
+
+    const { stdout, stderr } = await execFileP(
+      'uv',
+      ['run', path.join(__dirname, 'generate.py'), videoPrompt],
+      { env: { ...process.env, ARK_API_KEY: process.env.ARK_API_KEY } },
+    );
+    if (stderr) console.log('[generate.py stderr]\n' + stderr);
+    res.type('application/json').send(stdout);
+  } catch (err) {
+    console.error('[generate] error', err);
+    res.status(500).json({ error: err.message, stderr: err.stderr });
+  }
 });
 
 app.listen(4184, () => {
