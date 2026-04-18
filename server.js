@@ -10,7 +10,7 @@ import { randomUUID } from 'node:crypto';
 
 const execFileP = promisify(execFile);
 
-const N_FRAMES = 20;
+const N_FRAMES = 4;
 
 const FFMPEG_ROOT = '/Users/b1f6c1c4/ffmpeg/FFmpeg';
 const DYLD_PATH = [
@@ -104,7 +104,21 @@ app.post('/upload', upload.single('video'), async (req, res) => {
       return { frame: fname, text: completion.choices[0]?.message?.content ?? '' };
     }));
 
-    res.json({
+    const concatenated = results.map((r) => r.text).join('\n\n---\n\n');
+    const analysisPrompt = `based on what the user said, generate this {
+mbti: ["ISTJ","INTJ","ESTP"],
+description: ["...", "...", "..."],
+thoughts: ["", "", ""],
+}`;
+    const analysis = await openai.chat.completions.create({
+      model: 'qwen3-30b-a3b',
+      messages: [
+        { role: 'user', content: `${analysisPrompt}\n\n---\n\n${concatenated}` },
+      ],
+    });
+    const analysisText = analysis.choices[0]?.message?.content ?? '';
+
+    console.log('[upload]', {
       jobId,
       duration,
       fps,
@@ -112,7 +126,6 @@ app.post('/upload', upload.single('video'), async (req, res) => {
       pickedIndices: indices,
       framesDir,
       frameCount: frames.length,
-      ocr: results,
       file: {
         filename: req.file.filename,
         originalname: req.file.originalname,
@@ -121,6 +134,11 @@ app.post('/upload', upload.single('video'), async (req, res) => {
         path: req.file.path,
       },
     });
+    console.log('[ocr]', results);
+    console.log('[concatenated]\n' + concatenated);
+    console.log('[analysis]\n' + analysisText);
+
+    res.type('text/plain').send(analysisText);
   } catch (err) {
     res.status(500).json({ error: err.message, stderr: err.stderr });
   }
