@@ -391,6 +391,6 @@ app.get('/api/generate/video', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 4184;
-app.listen(PORT, () => {
-  console.log(`listening on :${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`listening on 0.0.0.0:${PORT}`);
 });
