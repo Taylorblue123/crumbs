@@ -21,4 +21,4 @@ export type Step =
   | { kind: 'transition2'; picked: PickedFull }
   | { kind: 'video'; videoUrl: string; picked: PickedFull }
   | { kind: 'share'; videoUrl: string; picked: PickedFull }
-  | { kind: 'error'; message: string; retryTo: Step['kind'] }
+  | { kind: 'error'; message: string; retryTo: Step['kind']; _picked?: PickedFull; _file?: File }

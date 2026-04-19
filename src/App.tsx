@@ -25,11 +25,13 @@ export default function App() {
   }, [])
 
   const onUploadError = useCallback(() => {
-    setStep({ kind: 'error', message: 'Upload failed. Try again?', retryTo: 'onboarding' })
+    const file = pendingFileRef.current
+    setStep({ kind: 'error', message: 'Upload failed. Try again?', retryTo: 'transition1', _file: file ?? undefined })
   }, [])
 
   const { start: startUpload } = useUpload(onProgress, onUploadSuccess, onUploadError)
 
+  const pendingFileRef = useRef<File | null>(null)
   const pendingPickedRef = useRef<PickedFull | null>(null)
 
   const onGenerateSuccess = useCallback(
@@ -44,13 +46,18 @@ export default function App() {
   )
 
   const onGenerateError = useCallback(() => {
-    setStep({ kind: 'error', message: 'Video generation failed.', retryTo: 'onboarding' })
-    pendingPickedRef.current = null
+    const picked = pendingPickedRef.current
+    if (picked) {
+      setStep({ kind: 'error', message: 'Video generation failed.', retryTo: 'transition2', _picked: picked })
+    } else {
+      setStep({ kind: 'error', message: 'Video generation failed.', retryTo: 'onboarding' })
+    }
   }, [])
 
   const { start: startGenerate } = useGenerate(onGenerateSuccess, onGenerateError)
 
   const handleFileSelected = (file: File) => {
+    pendingFileRef.current = file
     setStep({ kind: 'transition1', phase: 'uploading', uploadPct: 0 })
     startUpload(file)
   }
@@ -154,7 +161,22 @@ export default function App() {
               {step.message}
             </p>
             <button
-              onClick={handleStartOver}
+              onClick={() => {
+                if (step._picked) {
+                  // Retry video generation
+                  const picked = step._picked
+                  pendingPickedRef.current = picked
+                  setStep({ kind: 'transition2', picked })
+                  startGenerate(picked.mbti, picked.description, picked.thought)
+                } else if (step._file) {
+                  // Retry upload
+                  pendingFileRef.current = step._file
+                  setStep({ kind: 'transition1', phase: 'uploading', uploadPct: 0 })
+                  startUpload(step._file)
+                } else {
+                  handleStartOver()
+                }
+              }}
               className="cursor-pointer rounded-full bg-crumbs-pink px-8 py-3 text-crumbs-ink"
               style={{
                 fontFamily: 'var(--font-body)',
@@ -164,7 +186,22 @@ export default function App() {
                 textTransform: 'uppercase',
               }}
             >
-              TRY AGAIN
+              RETRY
+            </button>
+            <button
+              onClick={handleStartOver}
+              className="cursor-pointer text-crumbs-yellow"
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '13px',
+                fontWeight: 500,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                background: 'none',
+                border: 'none',
+              }}
+            >
+              START OVER
             </button>
           </div>
         )}

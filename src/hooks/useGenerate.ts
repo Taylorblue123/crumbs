@@ -5,24 +5,27 @@ export function useGenerate(
   onSuccess: (videoUrl: string) => void,
   onError: (err: Error) => void,
 ) {
-  const abortRef = useRef(false)
+  const ctrlRef = useRef<AbortController | null>(null)
 
   const start = useCallback(
     (mbti: string, description: string, thought: string) => {
-      abortRef.current = false
-      generateVideo(mbti, description, thought)
+      ctrlRef.current?.abort()
+      const ctrl = new AbortController()
+      ctrlRef.current = ctrl
+
+      generateVideo(mbti, description, thought, ctrl.signal)
         .then((url) => {
-          if (!abortRef.current) onSuccess(url)
+          if (!ctrl.signal.aborted) onSuccess(url)
         })
         .catch((err) => {
-          if (!abortRef.current) onError(err)
+          if (!ctrl.signal.aborted) onError(err)
         })
     },
     [onSuccess, onError],
   )
 
   const cancel = useCallback(() => {
-    abortRef.current = true
+    ctrlRef.current?.abort()
   }, [])
 
   return { start, cancel }

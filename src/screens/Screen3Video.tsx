@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { MbtiAvatar } from '../components/MbtiAvatar'
 import type { PickedFull } from '../api/types'
@@ -10,6 +11,8 @@ interface Props {
 }
 
 export function Screen3Video({ videoUrl, picked, onShare, onStartOver }: Props) {
+  const [videoError, setVideoError] = useState(false)
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -32,16 +35,44 @@ export function Screen3Video({ videoUrl, picked, onShare, onStartOver }: Props) 
         YOUR ROAST
       </p>
 
-      {/* Video */}
-      <div className="flex-1 overflow-hidden rounded-2xl">
-        <video
-          src={videoUrl}
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="h-full w-full rounded-2xl object-cover"
-        />
+      {/* Video or fallback */}
+      <div className="relative flex flex-1 items-center justify-center overflow-hidden rounded-2xl bg-crumbs-ink">
+        {!videoError ? (
+          <video
+            src={videoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            onError={() => setVideoError(true)}
+            className="h-full w-full rounded-2xl object-contain"
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-4 p-6">
+            <MbtiAvatar type={picked.mbti} size={160} />
+            <p
+              className="text-center text-crumbs-yellow"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '24px',
+                fontWeight: 700,
+                fontStyle: 'italic',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              Video couldn't load — but you're still a {picked.mbti}
+            </p>
+            <p
+              className="text-center text-crumbs-pink"
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '13px',
+              }}
+            >
+              {picked.description}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Buttons */}

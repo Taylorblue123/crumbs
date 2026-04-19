@@ -37,11 +37,15 @@ export async function generateVideo(
   mbti: string,
   description: string,
   thought: string,
+  signal?: AbortSignal,
 ): Promise<string> {
   const params = new URLSearchParams({ mbti, description, thought })
-  const res = await fetch(`${BASE}/generate?${params}`, {
-    signal: AbortSignal.timeout(120_000),
-  })
+  const timeout = AbortSignal.timeout(120_000)
+  // Combine caller signal with timeout — abort on whichever fires first
+  const combined = signal
+    ? AbortSignal.any([signal, timeout])
+    : timeout
+  const res = await fetch(`${BASE}/generate?${params}`, { signal: combined })
   if (!res.ok) throw new Error(`Generate failed: ${res.status}`)
   const blob = await res.blob()
   return URL.createObjectURL(blob)
