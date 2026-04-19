@@ -7,7 +7,7 @@ interface Props {
 }
 
 export function Screen4Share({ videoUrl, onClose, onDone }: Props) {
-  const SHARE_TEXT = 'Get your personality roasted → crumbs.app'
+  const SHARE_TEXT = 'Get your personality roasted → crumbs-production.up.railway.app'
 
   const handleSaveVideo = async () => {
     const a = document.createElement('a')
@@ -148,7 +148,7 @@ export function Screen4Share({ videoUrl, onClose, onDone }: Props) {
           opacity: 0.5,
         }}
       >
-        crumbs.app — get your personality roasted
+        crumbs-production.up.railway.app — get your personality roasted
       </p>
 
       {/* Done */}

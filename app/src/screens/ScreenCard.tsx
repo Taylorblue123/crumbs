@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MbtiAvatar } from '../components/MbtiAvatar'
 import type { PickedFull } from '../api/types'
 
+
 interface Props {
   picked: PickedFull
   totemUrl?: string
@@ -142,39 +143,18 @@ async function renderCardToBlob(
 
   // Domain (right side, above QR)
   ctx.textAlign = 'right'
-  ctx.font = '500 16px "Space Grotesk", system-ui, sans-serif'
+  ctx.font = '500 14px "Space Grotesk", system-ui, sans-serif'
   ctx.globalAlpha = 0.6
-  ctx.fillText('crumbs.app', W - 100, brandY + 32)
+  ctx.fillText('scan to try', W - 85, brandY + 28)
   ctx.globalAlpha = 1
 
-  // Fake QR code placeholder (right corner)
-  const qrX = W - 80
-  const qrY = brandY + 10
-  const qrSize = 60
-  ctx.fillStyle = '#FFE14D'
-  ctx.globalAlpha = 0.8
-  ctx.fillRect(qrX, qrY, qrSize, qrSize)
-  // Draw a simple QR-like pattern
-  ctx.fillStyle = '#0A0F3D'
-  const cellSize = qrSize / 8
-  const qrPattern = [
-    [1,1,1,0,1,1,1,0],
-    [1,0,1,0,0,1,0,1],
-    [1,1,1,0,1,0,1,0],
-    [0,0,0,1,0,1,0,1],
-    [1,0,1,0,1,1,1,0],
-    [1,0,0,1,0,0,1,1],
-    [1,1,1,0,1,0,1,0],
-    [0,1,0,1,0,1,1,1],
-  ]
-  for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
-      if (qrPattern[row][col]) {
-        ctx.fillRect(qrX + col * cellSize, qrY + row * cellSize, cellSize - 1, cellSize - 1)
-      }
-    }
-  }
-  ctx.globalAlpha = 1
+  // Real QR code (right corner)
+  try {
+    const qrImg = await loadImage('/qr-crumbs.png')
+    const qrSize = 56
+    ctx.drawImage(qrImg, W - qrSize - 25, brandY + 10, qrSize, qrSize)
+  } catch { /* skip QR */ }
+
   ctx.textAlign = 'center'
 
   return new Promise((resolve) => {
@@ -194,7 +174,7 @@ export function ScreenCard({ picked, totemUrl, onWantVideo, onStartOver }: Props
         await navigator.share({
           files: [file],
           title: `I'm a ${picked.mbti} — CRUMBS`,
-          text: 'Get your personality roasted → crumbs.app',
+          text: 'Get your personality roasted → crumbs-production.up.railway.app',
         })
       } else {
         const url = URL.createObjectURL(blob)
@@ -471,7 +451,7 @@ export function ScreenCard({ picked, totemUrl, onWantVideo, onStartOver }: Props
                 whileTap={{ scale: 0.97 }}
                 onClick={async () => {
                   try {
-                    await navigator.clipboard.writeText('Get your personality roasted → crumbs.app')
+                    await navigator.clipboard.writeText('Get your personality roasted → crumbs-production.up.railway.app')
                   } catch {}
                 }}
                 className="w-full cursor-pointer rounded-full border-2 border-crumbs-ink bg-transparent py-4 text-crumbs-ink"
