@@ -12,7 +12,7 @@ import { OCR_PROMPT, ANALYSIS_PROMPT, videoPromptPrompt } from './prompts.js';
 
 const execFileP = promisify(execFile);
 
-const N_FRAMES = 40;
+const N_FRAMES = 20;
 
 const FFMPEG_BIN = process.env.FFMPEG_BIN || 'ffmpeg';
 const FFPROBE_BIN = process.env.FFPROBE_BIN || 'ffprobe';
