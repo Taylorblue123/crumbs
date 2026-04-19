@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import json
+import base64
 from datetime import datetime
 from byteplussdkarkruntime import Ark
 
@@ -35,6 +36,17 @@ if len(sys.argv) < 2:
 prompt = sys.argv[1]
 log("prompt", prompt=prompt)
 
+content = [{"type": "text", "text": prompt}]
+if len(sys.argv) >= 3 and sys.argv[2]:
+    img_path = sys.argv[2]
+    if os.path.exists(img_path):
+        with open(img_path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode()
+        content.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}})
+        log("reference_image", path=img_path, b64_bytes=len(b64))
+    else:
+        log("reference_image_missing", path=img_path)
+
 client = Ark(base_url=BASE_URL, api_key=os.environ["ARK_API_KEY"])
 log("client_ready")
 
@@ -43,7 +55,7 @@ t0 = time.time()
 try:
     create_result = client.content_generation.tasks.create(
         model=MODEL,
-        content=[{"type": "text", "text": prompt}],
+        content=content,
     )
 except Exception as e:
     log("create_failed", error=repr(e))

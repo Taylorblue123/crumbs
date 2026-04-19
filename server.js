@@ -169,7 +169,9 @@ app.get('/generate', async (req, res) => {
     console.log('[generate] script:', videoPrompt);
 
     const stdout = await new Promise((resolve, reject) => {
-      const child = spawn('uv', ['run', path.join(__dirname, 'generate.py'), videoPrompt], {
+      const avatarPath = path.join(__dirname, 'dist', 'avatars', `${String(mbti ?? '').trim().toLowerCase()}.png`);
+      console.log('[generate] avatar:', avatarPath);
+      const child = spawn('uv', ['run', path.join(__dirname, 'generate.py'), videoPrompt, avatarPath], {
         cwd: __dirname,
         stdio: ['ignore', 'pipe', 'inherit'],
       });
