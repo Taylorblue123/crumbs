@@ -277,33 +277,6 @@ DO NOT
 - Produce lines that could apply to any user.
 
 ==================================================================
-OUTPUT FORMAT
-==================================================================
-Return only valid JSON. No preamble, no commentary, no markdown fences.
-
-{
-  "plot_used": "time_capsule" | "prophecy" | "reveal",
-  "plot_reason": "one sentence explaining why you chose this plot 
-    for this specific user",
-  "total_duration_seconds": 15,
-  "beats": [
-    {
-      "start": 0.0,
-      "end": 2.5,
-      "text": "...",
-      "display": "title" | "thought_bubble" | "caption" | "verdict",
-      "emphasis": "normal" | "dramatic"
-    }
-  ],
-  "closing_tag": "a single-line verdict under 12 words",
-  "screenshot_line_beat_index": 4,
-  "share_context": "one sentence describing the friend the user 
-    would send this to"
-}
-
-Beat timing must sum to 15 seconds.
-
-==================================================================
 INPUTS
 ==================================================================
 MBTI: {mbti}
@@ -311,5 +284,4 @@ Description: {description}
 Thoughts: {thoughts}
 
 Pick the plot template, then generate the script.
-
 `

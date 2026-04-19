@@ -11,7 +11,7 @@ import { OCR_PROMPT, ANALYSIS_PROMPT, videoPromptPrompt } from './prompts.js';
 
 const execFileP = promisify(execFile);
 
-const N_FRAMES = 40;
+const N_FRAMES = 20;
 
 const FFMPEG_ROOT = '/Users/b1f6c1c4/ffmpeg/FFmpeg';
 const DYLD_PATH = [
@@ -169,7 +169,7 @@ app.get('/generate', async (req, res) => {
     console.log('[generate] script:', videoPrompt);
 
     const stdout = await new Promise((resolve, reject) => {
-      const avatarPath = path.join(__dirname, 'dist', 'avatars', `${String(mbti ?? '').trim().toLowerCase()}.png`);
+      const avatarPath = path.join(__dirname, 'dist', 'avatars', `${String(mbti ?? '').trim().toLowerCase()}-vert.png`);
       console.log('[generate] avatar:', avatarPath);
       const child = spawn('uv', ['run', path.join(__dirname, 'generate.py'), videoPrompt, avatarPath], {
         cwd: __dirname,
@@ -182,7 +182,22 @@ app.get('/generate', async (req, res) => {
         code === 0 ? resolve(out) : reject(new Error(`generate.py exited ${code}`));
       });
     });
-    res.type('application/json').send(stdout);
+    const parsed = JSON.parse(stdout);
+    console.log('[generate] result json:', JSON.stringify(parsed, null, 2));
+    const videoUrl = parsed?.content?.video_url;
+    if (!videoUrl) {
+      return res.status(500).json({ error: 'no video_url in result', result: parsed });
+    }
+    console.log('[generate] streaming:', videoUrl);
+    const upstream = await fetch(videoUrl);
+    if (!upstream.ok) {
+      return res.status(502).json({ error: `upstream ${upstream.status}`, videoUrl });
+    }
+    res.type('video/mp4');
+    const len = upstream.headers.get('content-length');
+    if (len) res.setHeader('Content-Length', len);
+    const { Readable } = await import('node:stream');
+    Readable.fromWeb(upstream.body).pipe(res);
   } catch (err) {
     console.error('[generate] error', err);
     res.status(500).json({ error: err.message, stderr: err.stderr });

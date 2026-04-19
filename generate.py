@@ -25,7 +25,7 @@ def dump(obj):
 
 
 BASE_URL = "https://ark.ap-southeast.bytepluses.com/api/v3"
-MODEL = "dreamina-seedance-2-0-260128"
+MODEL = "dreamina-seedance-2-0-fast-260128"
 
 log("startup", base_url=BASE_URL, model=MODEL, argc=len(sys.argv), has_api_key=bool(os.environ.get("ARK_API_KEY")))
 
@@ -56,6 +56,9 @@ try:
     create_result = client.content_generation.tasks.create(
         model=MODEL,
         content=content,
+        generate_audio=True,
+        ratio="9:16",
+        duration=15,
     )
 except Exception as e:
     log("create_failed", error=repr(e))
