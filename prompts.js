@@ -77,9 +77,10 @@ You are generating a 15-second vertical video script for a
 personality-reveal app. The user uploaded their private saved 
 messages — thoughts they sent to themselves, quotes they saved, 
 half-drafted ideas nobody else has seen. They chose one MBTI 
-reading of themselves. Your job is to write a video script that 
-feels like it was made by a close friend who has been quietly 
-paying attention.
+reading of themselves. Your job is to pick the best plot template 
+for this specific person, then write a video script that feels 
+like it was made by a close friend who has been quietly paying 
+attention.
 
 The goal: the user screenshots one line and sends this video to 
 exactly one specific friend, saying "this is literally me."
@@ -88,30 +89,70 @@ INPUTS:
 - MBTI: {mbti}
 - Description of the person: {description}
 - Their three most characterful thoughts: {thoughts}
-- Plot template to use: {plot_name}
 
 ==================================================================
-PLOT TEMPLATES
+STEP 1: PICK A PLOT TEMPLATE
 ==================================================================
-You are using ONE of the following plot templates, specified in 
-the input above. Follow the structure for that template exactly. 
-Do not mix templates.
+Three templates are available. Pick the ONE that best fits this 
+user's specific inputs. Do not default to a favorite — evaluate 
+which template the data actually supports.
+
+SELECTION CRITERIA:
+
+Pick "time_capsule" when:
+- The thoughts contain date markers, or clearly reference different 
+  periods of the user's life
+- The description mentions repetition, stagnation, or consistent 
+  patterns over time
+- At least two of the three thoughts feel like they could be the 
+  same thought expressed at different ages
+- The user appears to revisit the same themes across time
+
+Pick "prophecy" when:
+- The thoughts contain time references (times of day, days of week, 
+  routines)
+- The description mentions predictable patterns, habits, or 
+  recurring behaviors
+- The thoughts reveal a rhythm the user may not notice themselves
+- The data supports specific-feeling predictions about what the 
+  user will do next
+
+Pick "reveal" when:
+- The thoughts hint at a hidden theme beneath their surface topics 
+  (e.g., they appear to be about different things but share an 
+  underlying emotional through-line)
+- The description is emotionally rich — words like "quiet," "hidden," 
+  "longing," "tender," "ache"
+- The thoughts include vulnerable or self-aware content
+- The user's data rewards a slow, emotional payoff more than comedy
+
+If multiple templates fit, choose in this priority order: reveal > 
+time_capsule > prophecy. Reveal is hardest to earn but lands 
+deepest; pick it whenever the data genuinely supports it.
+
+If none clearly fit — the data is thin, generic, or task-list-like — 
+pick "time_capsule" as the fallback, since it benefits most from 
+even weak repetition patterns.
+
+==================================================================
+STEP 2: WRITE THE SCRIPT USING THE CHOSEN TEMPLATE
+==================================================================
+Follow the structure for your chosen template exactly. Do not mix 
+templates.
 
 ------------------------------------------------------------------
 TEMPLATE: time_capsule
 ------------------------------------------------------------------
 This video is structured as a multi-year comparison. Same person, 
 same thought, different years. The comedy and pathos come from 
-stagnation. Requires thoughts that span multiple years — if they 
-don't, pick the closest-available repetitions.
+stagnation.
 
 BEAT 1 (0:00-0:02, display: title, emphasis: normal):
 The setup. Format: "Your saved messages across [N] years." Or: 
 "You, every [month], for [N] years."
 
 BEAT 2 (0:02-0:05, display: thought_bubble, emphasis: normal):
-Earliest version. Date stamp + verbatim thought. The date makes 
-the beat feel real.
+Earliest version. Date stamp + verbatim thought.
 
 BEAT 3 (0:05-0:08, display: thought_bubble, emphasis: normal):
 Middle year. Date stamp + similar or repeated thought. The 
@@ -119,83 +160,71 @@ repetition should be visible.
 
 BEAT 4 (0:08-0:11, display: thought_bubble, emphasis: dramatic):
 Most recent year. Date stamp + the same thought again. This is 
-the vulnerable beat — the moment the pattern lands.
+the vulnerable beat.
 
 BEAT 5 (0:11-0:13, display: verdict, emphasis: dramatic):
 The reframe. Format: "You're not [negative word]. You're 
-[affectionate reframe]." This is the screenshot line. Must be 
-tender, not cruel.
+[affectionate reframe]." This is the screenshot line. Tender.
 
 CLOSING_TAG (0:13-0:15):
-A dry prediction that the pattern continues. Under 10 words. 
-Loving, not mean.
+A dry prediction that the pattern continues. Under 10 words.
 
 ------------------------------------------------------------------
 TEMPLATE: prophecy
 ------------------------------------------------------------------
-This video is structured as a prediction. Present patterns used 
-to foretell the future. Playful, slightly unsettling. Feels like 
-fortune-telling. Works best when the data contains predictable 
-rhythms — routines, recurring vocabulary, patterns of behavior.
+This video is structured as a prediction. Present patterns foretell 
+the future. Playful, slightly unsettling. Feels like fortune-telling.
 
 BEAT 1 (0:00-0:03, display: title, emphasis: normal):
-The oracular setup. Format: "Based on your saved messages, 
-here's your tomorrow." Or: "Here's your next week." Confident tone.
+The oracular setup. Format: "Based on your saved messages, here's 
+your tomorrow." Or: "Here's your next week." Confident.
 
 BEAT 2 (0:03-0:05, display: thought_bubble, emphasis: normal):
-First prediction. Specific, small, plausible. Include a time if 
-possible ("at 10:47 AM"). Short — under 10 words.
+First prediction. Specific, small, plausible. Include a time 
+if possible.
 
 BEAT 3 (0:05-0:08, display: thought_bubble, emphasis: normal):
-Second prediction. Slightly escalated. References a pattern from 
-the user's thoughts or description.
+Second prediction. Slightly escalated. References a pattern.
 
 BEAT 4 (0:08-0:11, display: caption, emphasis: dramatic):
-The prediction that hurts. So specific the user wonders how 
-the AI knew. Anchored in a real detail from their inputs. This 
-is the vulnerable beat.
+The prediction that hurts. So specific the user wonders how the 
+AI knew. Anchored in real detail. This is the vulnerable beat.
 
 BEAT 5 (0:11-0:13, display: verdict, emphasis: dramatic):
-The summary. Format references repetition explicitly: "You've 
-done this [N] times. You'll do it again." This is the screenshot 
-line.
+The summary. Format references repetition: "You've done this [N] 
+times. You'll do it again." Screenshot line.
 
 CLOSING_TAG (0:13-0:15):
-A specific day, time, or trigger when they'll repeat the pattern. 
-Dry, knowing. Under 8 words.
+A specific day, time, or trigger. Under 8 words.
 
 ------------------------------------------------------------------
 TEMPLATE: reveal
 ------------------------------------------------------------------
 This video is structured as a slow discovery. Quiet, poignant, 
-building to an emotional reframe. Least comedic, most resonant. 
-The template that can make someone cry. Use when the thoughts 
-contain hidden emotional patterns beneath apparent surface topics.
+building to an emotional reframe. The template that can make 
+someone cry.
 
 BEAT 1 (0:00-0:03, display: title, emphasis: normal):
 The setup question. Format: "Here's what your saved messages say 
-about you." Quiet tone — this video is not joking.
+about you." Quiet tone.
 
 BEAT 2 (0:03-0:06, display: thought_bubble, emphasis: normal):
-Surface observation. What the messages appear to be about. A 
-verbatim quote if possible.
+Surface observation. What the messages appear to be about. 
+Verbatim quote if possible.
 
 BEAT 3 (0:06-0:09, display: thought_bubble, emphasis: normal):
-Deeper observation. What's underneath. Another verbatim element. 
-The layer below the first.
+Deeper observation. What's underneath.
 
 BEAT 4 (0:09-0:12, display: caption, emphasis: normal):
-The detail that reframes everything. Often a single outlier — 
-one message or pattern that changes the meaning of the rest. 
-This is the vulnerable beat.
+The detail that reframes everything. Often one outlier that 
+changes the meaning. This is the vulnerable beat.
 
 BEAT 5 (0:12-0:14, display: verdict, emphasis: dramatic):
-The reveal. One sentence that reframes the previous beats into 
-new meaning. This IS the screenshot line. Must be tender.
+The reveal. One sentence that reframes the previous beats. THIS 
+IS THE SCREENSHOT LINE. Must be tender.
 
 CLOSING_TAG (0:14-0:15):
-A quiet phrase. Often an echo or extension of the reveal. Under 
-8 words. The quietness is the point.
+A quiet phrase. Often an echo of the reveal. Under 8 words.
 
 ==================================================================
 THE SCREENSHOT LINE
@@ -204,66 +233,59 @@ One line in every video must be the "screenshot line" — the line
 the user wants to freeze, crop, and send. It must be:
 - Under 15 words
 - Self-contained (makes sense without the rest of the video)
-- Specific to this user but emotionally universal (the detail is 
-  theirs, the feeling is shared)
-- Placed in the beat the template specifies above (usually BEAT 5 
-  or CLOSING_TAG)
+- Specific to this user but emotionally universal
+- Placed in the beat the template specifies (usually BEAT 5)
 
-Every other line supports this one. This line carries the video.
+Every other line supports this one.
 
 ==================================================================
 VOICE RULES
 ==================================================================
 - Declarative sentences only. No hedging: no "might," "sometimes," 
   "perhaps," "it seems like," "maybe." Every line is a verdict.
-- 10-18 words per line. Longer is always worse. Cut until it hurts.
-- Echo the user's own vocabulary from their thoughts. If they 
-  write "lol" or "idk," your script can too. If they write 
-  formally, match that.
-- Specific over general. Reference real details from their thoughts 
-  and description — numbers, quotes, repeated patterns, dates.
+- 10-18 words per line. Longer is always worse.
+- Echo the user's own vocabulary from their thoughts. Match their 
+  register — casual if they're casual, formal if they're formal.
+- Specific over general. Reference real details — numbers, quotes, 
+  patterns, dates.
 - Affectionate, not cruel. The user should feel seen, not attacked.
-- One beat per video must be genuinely vulnerable. Templates above 
-  mark which beat carries this weight. Do not skip it.
+- One beat per video must be genuinely vulnerable. The template 
+  marks which beat carries this weight. Do not skip it.
 - No emojis. No hashtags in script text.
 
 ==================================================================
 FORMATTING FOR VERTICAL SCREEN
 ==================================================================
-Text rendered on-screen must read clearly on a 9:16 phone at arm's 
-length. 4-8 words per visible line. Write so text breaks naturally 
-at line breaks — do not orphan key words on their own line.
+Text must read clearly on a 9:16 phone. 4-8 words per visible line. 
+Write so text breaks naturally — do not orphan key words.
 
 ==================================================================
 DO NOT
 ==================================================================
-- Summarize or paraphrase the thoughts. If you reference a thought, 
-  quote it verbatim. If you don't quote, don't reference.
-- Invent facts not present in the inputs. No made-up dates, 
-  numbers, or details.
-- Use MBTI stereotypes: no "typical INFP behavior," no "as an 
-  INTJ you...". The MBTI is a label, not a personality description. 
+- Summarize or paraphrase thoughts. Quote verbatim or don't reference.
+- Invent facts not present in the inputs.
+- Use MBTI stereotypes ("as an INTJ you...", "typical INFP behavior"). 
   Write about the person, not the type.
-- Explain what MBTI is or means.
-- Include meta-commentary about the video itself.
-- Use generic Gen Z filler: "the girls that get it," "it's giving," 
-  "if you know you know," "not me [doing thing]."
+- Explain what MBTI is.
+- Include meta-commentary about the video.
+- Use Gen Z filler: "the girls that get it," "it's giving," "if 
+  you know you know," "not me [doing thing]."
 - Use therapy-speak: "inner child," "healing journey," "holding 
   space," "sitting with," "trauma response."
-- Use the AI-slop constructions: "It's not about X. It's about Y." 
-  "You're not just X. You're Y." "Some would say X. But actually Y."
-- Produce lines that could apply to any user. Every line must be 
-  anchored in this specific person's inputs.
+- Use AI-slop constructions: "It's not about X. It's about Y." 
+  "You're not just X. You're Y."
+- Produce lines that could apply to any user.
 
 ==================================================================
 OUTPUT FORMAT
 ==================================================================
-Return only valid JSON. No preamble, no commentary, no markdown 
-fences.
+Return only valid JSON. No preamble, no commentary, no markdown fences.
 
 {
-  "total_duration_seconds": 15,
   "plot_used": "time_capsule" | "prophecy" | "reveal",
+  "plot_reason": "one sentence explaining why you chose this plot 
+    for this specific user",
+  "total_duration_seconds": 15,
   "beats": [
     {
       "start": 0.0,
@@ -276,11 +298,10 @@ fences.
   "closing_tag": "a single-line verdict under 12 words",
   "screenshot_line_beat_index": 4,
   "share_context": "one sentence describing the friend the user 
-    would send this to. Example: 'a friend who also saves too many 
-    articles about sleep hygiene.'"
+    would send this to"
 }
 
-Beat timing must sum to 15 seconds total.
+Beat timing must sum to 15 seconds.
 
 ==================================================================
 INPUTS
@@ -288,8 +309,7 @@ INPUTS
 MBTI: {mbti}
 Description: {description}
 Thoughts: {thoughts}
-Plot template: {plot_name}
 
-Generate the video script now.
+Pick the plot template, then generate the script.
 
 `

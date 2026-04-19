@@ -4,14 +4,14 @@ import OpenAI from 'openai';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { randomUUID } from 'node:crypto';
 import { OCR_PROMPT, ANALYSIS_PROMPT, videoPromptPrompt } from './prompts.js';
 
 const execFileP = promisify(execFile);
 
-const N_FRAMES = 4;
+const N_FRAMES = 40;
 
 const FFMPEG_ROOT = '/Users/b1f6c1c4/ffmpeg/FFmpeg';
 const DYLD_PATH = [
@@ -29,9 +29,7 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 
 const app = express();
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+app.use(express.static(path.join(__dirname, 'dist')));
 
 const upload = multer({ dest: path.join(DATA_DIR, 'uploads') });
 
@@ -41,6 +39,7 @@ const openai = new OpenAI({
 });
 
 app.post('/upload', upload.single('video'), async (req, res) => {
+  console.log('[upload] request:', req.file);
   if (!req.file) {
     return res.status(400).json({ error: 'no video file' });
   }
@@ -52,6 +51,7 @@ app.post('/upload', upload.single('video'), async (req, res) => {
       '-of', 'default=noprint_wrappers=1',
       req.file.path,
     ], { env: FF_ENV });
+    console.log('[upload] ffprobe output:', stdout);
     const kv = Object.fromEntries(
       stdout.trim().split('\n').map((l) => l.split('=')),
     );
@@ -66,6 +66,7 @@ app.post('/upload', upload.single('video'), async (req, res) => {
     const hi = Math.floor(totalFrames * 0.8);
     const rangeSize = hi - lo;
     const n = Math.min(N_FRAMES, rangeSize);
+    console.log('[upload] n:', n);
 
     const picked = new Set();
     while (picked.size < n) {
@@ -73,6 +74,7 @@ app.post('/upload', upload.single('video'), async (req, res) => {
     }
     const indices = [...picked].sort((a, b) => a - b);
 
+    console.log('[upload] picked indices:', indices);
     const jobId = randomUUID();
     const framesDir = path.join(DATA_DIR, jobId);
     fs.mkdirSync(framesDir, { recursive: true });
@@ -87,7 +89,7 @@ app.post('/upload', upload.single('video'), async (req, res) => {
     ], { env: FF_ENV });
 
     const frames = fs.readdirSync(framesDir).sort();
-
+    console.log('[upload] frames:', frames);
     const results = await Promise.all(frames.map(async (fname) => {
       const fpath = path.join(framesDir, fname);
       const b64 = fs.readFileSync(fpath).toString('base64');
@@ -103,7 +105,8 @@ app.post('/upload', upload.single('video'), async (req, res) => {
       });
       return { frame: fname, text: completion.choices[0]?.message?.content ?? '' };
     }));
-
+    console.log('[upload] results:', results.length);
+    
     const concatenated = results.map((r) => r.text).join('\n\n---\n\n');
     const analysis = await openai.chat.completions.create({
       model: 'qwen3-30b-a3b',
@@ -143,28 +146,40 @@ const PLOTS = ['time_capsule', 'prophecy', 'reveal'];
 
 app.get('/generate', async (req, res) => {
   const { mbti, description } = req.query;
-  const thoughts = [].concat(req.query.thoughts ?? req.query.thought ?? []);
-  const plot_name = req.query.plot || PLOTS[Math.floor(Math.random() * PLOTS.length)];
+  const rawThoughts = req.query.thoughts ?? req.query.thought ?? [];
+  let thoughts = [].concat(rawThoughts);
+  if (thoughts.length === 1 && typeof thoughts[0] === 'string') {
+    const s = thoughts[0].trim();
+    if (s.startsWith('[')) {
+      try { thoughts = JSON.parse(s); } catch {}
+    }
+  }
+  console.log('[generate] inputs:', { mbti, description, thoughts });
   try {
     const filled = videoPromptPrompt({})
       .replaceAll('{mbti}', String(mbti ?? ''))
       .replaceAll('{description}', String(description ?? ''))
+      .replaceAll('{thought}', thoughts.join(' / '))
       .replaceAll('{thoughts}', JSON.stringify(thoughts))
-      .replaceAll('{plot_name}', plot_name);
     const completion = await openai.chat.completions.create({
       model: 'qwen3-30b-a3b',
       messages: [{ role: 'user', content: filled }],
     });
     const videoPrompt = (completion.choices[0]?.message?.content ?? '').trim();
-    console.log('[generate] plot:', plot_name);
     console.log('[generate] script:', videoPrompt);
 
-    const { stdout, stderr } = await execFileP(
-      'uv',
-      ['run', path.join(__dirname, 'generate.py'), videoPrompt],
-      { env: { ...process.env, ARK_API_KEY: process.env.ARK_API_KEY } },
-    );
-    if (stderr) console.log('[generate.py stderr]\n' + stderr);
+    const stdout = await new Promise((resolve, reject) => {
+      const child = spawn('uv', ['run', path.join(__dirname, 'generate.py'), videoPrompt], {
+        cwd: __dirname,
+        stdio: ['ignore', 'pipe', 'inherit'],
+      });
+      let out = '';
+      child.stdout.on('data', (d) => { out += d.toString(); });
+      child.on('error', reject);
+      child.on('close', (code) => {
+        code === 0 ? resolve(out) : reject(new Error(`generate.py exited ${code}`));
+      });
+    });
     res.type('application/json').send(stdout);
   } catch (err) {
     console.error('[generate] error', err);
