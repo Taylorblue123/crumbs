@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MbtiAvatar } from '../components/MbtiAvatar'
 import type { UploadResponse } from '../api/types'
 
 const CARD_STYLES: Array<{
@@ -13,24 +12,24 @@ const CARD_STYLES: Array<{
     bg: 'var(--color-crumbs-yellow)',
     text: 'var(--color-crumbs-ink)',
     accent: 'var(--color-crumbs-pink)',
-    avatarRotation: -4,
+    avatarRotation: -6,
   },
   {
     bg: 'var(--color-crumbs-pink)',
     text: 'var(--color-crumbs-ink)',
     accent: 'var(--color-crumbs-yellow)',
-    avatarRotation: 4,
+    avatarRotation: 5,
   },
   {
     bg: 'var(--color-crumbs-yellow)',
     text: 'var(--color-crumbs-pink)',
     accent: 'var(--color-crumbs-ink)',
-    avatarRotation: -4,
+    avatarRotation: -5,
   },
 ]
 
-const STACK_OFFSET_Y = 12
-const STACK_OFFSET_SCALE = 0.04
+const STACK_OFFSET_Y = 10
+const STACK_OFFSET_SCALE = 0.025
 
 interface Props {
   options: UploadResponse
@@ -61,37 +60,37 @@ export function Screen1Mbti({ options, onPick }: Props) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.18 }}
-      className="flex h-full w-full flex-col bg-crumbs-ink px-5 pt-8 pb-6"
+      className="flex h-full w-full flex-col bg-crumbs-ink px-4 pt-6 pb-6"
     >
-      {/* Eyebrow */}
-      <p
-        className="mb-2 text-crumbs-pink"
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: '11px',
-          fontWeight: 500,
-          letterSpacing: '0.15em',
-          textTransform: 'uppercase',
-        }}
-      >
-        WHO ARE YOU TODAY
-      </p>
+      {/* Eyebrow row */}
+      <div className="flex items-center justify-between px-1 mb-3">
+        <p
+          className="text-crumbs-pink"
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '11px',
+            fontWeight: 500,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+          }}
+        >
+          WHO ARE YOU TODAY
+        </p>
+        <p
+          className="text-crumbs-yellow"
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '13px',
+            fontWeight: 400,
+            fontStyle: 'italic',
+            opacity: 0.6,
+          }}
+        >
+          {deck.length} left
+        </p>
+      </div>
 
-      {/* Counter */}
-      <p
-        className="mb-5 text-crumbs-yellow"
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '14px',
-          fontWeight: 400,
-          fontStyle: 'italic',
-          opacity: 0.7,
-        }}
-      >
-        {deck.length} {deck.length === 1 ? 'option' : 'options'} left
-      </p>
-
-      {/* Card stack area */}
+      {/* Full-bleed card stack */}
       <div className="relative flex-1 min-h-0">
         <AnimatePresence mode="popLayout">
           {[...deck].reverse().map((originalIndex, visualIndex) => {
@@ -102,7 +101,7 @@ export function Screen1Mbti({ options, onPick }: Props) {
             return (
               <motion.div
                 key={`card-${originalIndex}`}
-                className="absolute inset-x-0 top-0"
+                className="absolute inset-0"
                 style={{ zIndex: 10 - stackIndex }}
                 initial={{
                   y: stackIndex * STACK_OFFSET_Y,
@@ -123,67 +122,76 @@ export function Screen1Mbti({ options, onPick }: Props) {
                 transition={{ type: 'spring', stiffness: 300, damping: 28 }}
               >
                 <div
-                  className="relative overflow-hidden rounded-3xl p-6"
-                  style={{
-                    backgroundColor: style.bg,
-                    minHeight: 'clamp(280px, 48vh, 380px)',
-                  }}
+                  className="relative flex h-full flex-col overflow-hidden rounded-3xl"
+                  style={{ backgroundColor: style.bg }}
                 >
-                  {/* Avatar — upper right, rotated */}
-                  <div
-                    className="absolute right-4 top-4"
-                    style={{ transform: `rotate(${style.avatarRotation}deg)` }}
-                  >
-                    <MbtiAvatar type={options.mbti[originalIndex]} size={110} />
+                  {/* Upper — avatar fills area */}
+                  <div className="relative flex-1 overflow-hidden">
+                    <img
+                      src={`/avatars/${options.mbti[originalIndex].toLowerCase()}.png`}
+                      alt={options.mbti[originalIndex]}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                    {/* Card indicator overlay */}
+                    {isTop && (
+                      <span
+                        className="absolute left-4 top-4"
+                        style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '11px',
+                          fontWeight: 500,
+                          letterSpacing: '0.15em',
+                          color: '#fff',
+                          opacity: 0.7,
+                          textShadow: '0 1px 4px rgba(0,0,0,0.3)',
+                        }}
+                      >
+                        {deck.indexOf(originalIndex) + 1} / {deck.length}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Content — bottom aligned */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6">
-                    {/* Giant MBTI type */}
-                    <span
+                  {/* Lower — ink panel with MBTI + roast */}
+                  <div className="px-5 py-4" style={{ backgroundColor: 'var(--color-crumbs-ink)' }}>
+                    <h2
+                      className="text-center text-crumbs-yellow"
                       style={{
                         fontFamily: 'var(--font-display)',
-                        fontSize: 'clamp(68px, 20vw, 100px)',
+                        fontSize: 'clamp(48px, 14vw, 72px)',
                         fontWeight: 900,
-                        color: style.text,
-                        letterSpacing: '-0.03em',
-                        lineHeight: 0.85,
-                        display: 'block',
+                        letterSpacing: '-0.04em',
+                        lineHeight: 0.9,
                       }}
                     >
                       {options.mbti[originalIndex]}
-                    </span>
-
-                    {/* Description */}
+                    </h2>
+                    {/* Type label — the funny nickname */}
+                    {options.type_label?.[originalIndex] && (
+                      <p
+                        className="mt-1 text-center text-crumbs-pink"
+                        style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          letterSpacing: '0.12em',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        {options.type_label[originalIndex]}
+                      </p>
+                    )}
+                    {/* Roast line */}
                     <p
-                      className="mt-3 max-w-[80%]"
+                      className="mt-2 text-center text-crumbs-pink"
                       style={{
                         fontFamily: 'var(--font-body)',
-                        fontSize: '14px',
-                        color: style.accent,
-                        lineHeight: 1.45,
+                        fontSize: 'clamp(13px, 3.5vw, 16px)',
+                        lineHeight: 1.4,
                       }}
                     >
-                      {options.description[originalIndex]}
+                      {options.roast_line?.[originalIndex] || options.description[originalIndex].split('.').slice(0, 2).join('.') + '.'}
                     </p>
                   </div>
-
-                  {/* Card number indicator */}
-                  {isTop && (
-                    <div
-                      className="absolute left-6 top-6"
-                      style={{
-                        fontFamily: 'var(--font-body)',
-                        fontSize: '11px',
-                        fontWeight: 500,
-                        letterSpacing: '0.15em',
-                        color: style.text,
-                        opacity: 0.5,
-                      }}
-                    >
-                      {deck.indexOf(originalIndex) + 1} / {deck.length}
-                    </div>
-                  )}
                 </div>
               </motion.div>
             )
@@ -191,43 +199,38 @@ export function Screen1Mbti({ options, onPick }: Props) {
         </AnimatePresence>
       </div>
 
-      {/* Action buttons — fixed below card stack */}
-      <div className="mt-5 flex items-center justify-center gap-6">
-        {/* Skip button */}
+      {/* Action buttons */}
+      <div className="mt-4 flex items-center justify-center gap-6">
         <motion.button
           whileTap={{ scale: 0.9 }}
           transition={{ duration: 0.12 }}
           onClick={handleSkip}
-          className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border-3"
+          className="flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-3"
           style={{
-            borderColor: 'var(--color-crumbs-pink)',
+            borderColor: topStyle.accent,
             backgroundColor: 'transparent',
           }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <path d="M18 6L6 18M6 6l12 12" stroke={topStyle.accent} strokeWidth="3" strokeLinecap="round" />
           </svg>
         </motion.button>
 
-        {/* Pick / confirm button */}
         <motion.button
           whileTap={{ scale: 0.9 }}
           transition={{ duration: 0.12 }}
           onClick={handlePick}
-          className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-full"
-          style={{
-            backgroundColor: 'var(--color-crumbs-pink)',
-          }}
+          className="flex h-18 w-18 cursor-pointer items-center justify-center rounded-full"
+          style={{ backgroundColor: 'var(--color-crumbs-pink)' }}
         >
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
             <path d="M5 12l5 5L20 7" stroke="var(--color-crumbs-ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </motion.button>
       </div>
 
-      {/* Hint text */}
       <p
-        className="mt-3 text-center"
+        className="mt-2 text-center"
         style={{
           fontFamily: 'var(--font-body)',
           fontSize: '11px',
@@ -235,7 +238,7 @@ export function Screen1Mbti({ options, onPick }: Props) {
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
           color: 'var(--color-crumbs-yellow)',
-          opacity: 0.35,
+          opacity: 0.3,
         }}
       >
         SKIP OR PICK — IT'S YOUR CALL

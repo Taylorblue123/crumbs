@@ -12,6 +12,13 @@ def log(event, **fields):
     print(json.dumps(payload, ensure_ascii=False, default=str), file=sys.stderr, flush=True)
 
 
+def emit(event, **fields):
+    """Write a JSON line to stdout for the Node.js parent to read as SSE."""
+    payload = {"event": event, **fields}
+    sys.stdout.write(json.dumps(payload, ensure_ascii=False, default=str) + "\n")
+    sys.stdout.flush()
+
+
 def dump(obj):
     if hasattr(obj, "model_dump"):
         return obj.model_dump()
@@ -50,43 +57,72 @@ if len(sys.argv) >= 3 and sys.argv[2]:
 client = Ark(base_url=BASE_URL, api_key=os.environ["ARK_API_KEY"])
 log("client_ready")
 
-log("create_request")
-t0 = time.time()
-try:
-    create_result = client.content_generation.tasks.create(
-        model=MODEL,
-        content=content,
-        generate_audio=True,
-        ratio="9:16",
-        duration=15,
-    )
-except Exception as e:
-    log("create_failed", error=repr(e))
-    raise
-task_id = create_result.id
-log("created", task_id=task_id, elapsed_s=round(time.time() - t0, 2), full=dump(create_result))
-
-poll_n = 0
-poll_started = time.time()
-while True:
-    poll_n += 1
+def run_generation(use_audio):
+    label = "with audio" if use_audio else "without audio"
+    log("create_request", audio=use_audio)
+    emit("progress", status="creating", attempt=0, elapsed_s=0)
+    t0 = time.time()
     try:
-        get_result = client.content_generation.tasks.get(task_id=task_id)
+        create_result = client.content_generation.tasks.create(
+            model=MODEL,
+            content=content,
+            generate_audio=use_audio,
+            ratio="9:16",
+            duration=15,
+        )
     except Exception as e:
-        log("poll_failed", attempt=poll_n, error=repr(e))
-        time.sleep(3)
-        continue
-    status = get_result.status
-    log("poll", attempt=poll_n, status=status, elapsed_s=round(time.time() - poll_started, 2))
-    if status == "succeeded":
-        log("succeeded", task_id=task_id, total_elapsed_s=round(time.time() - t0, 2), full=dump(get_result))
-        if hasattr(get_result, "model_dump_json"):
-            sys.stdout.write(get_result.model_dump_json())
+        log("create_failed", error=repr(e))
+        return "create_error", repr(e)
+    task_id = create_result.id
+    log("created", task_id=task_id, elapsed_s=round(time.time() - t0, 2), audio=use_audio, full=dump(create_result))
+
+    poll_n = 0
+    while True:
+        poll_n += 1
+        elapsed = round(time.time() - t0, 1)
+        try:
+            get_result = client.content_generation.tasks.get(task_id=task_id)
+        except Exception as e:
+            log("poll_failed", attempt=poll_n, error=repr(e))
+            emit("progress", status="polling", attempt=poll_n, elapsed_s=elapsed)
+            time.sleep(3)
+            continue
+        status = get_result.status
+        log("poll", attempt=poll_n, status=status, elapsed_s=elapsed)
+        emit("progress", status=status, attempt=poll_n, elapsed_s=elapsed)
+        if status == "succeeded":
+            log("succeeded", task_id=task_id, total_elapsed_s=round(time.time() - t0, 2), full=dump(get_result))
+            result_data = dump(get_result)
+            video_url = None
+            if isinstance(result_data, dict):
+                video_url = result_data.get("content", {}).get("video_url")
+            return "done", video_url
+        elif status == "failed":
+            err = getattr(get_result, "error", None)
+            err_data = dump(err) if err else {}
+            err_code = err_data.get("code", "") if isinstance(err_data, dict) else ""
+            err_msg = err_data.get("message", str(err)) if isinstance(err_data, dict) else str(err)
+            log("failed", task_id=task_id, error=err_msg, code=err_code, full=dump(get_result))
+            return "failed", (err_code, err_msg)
         else:
-            sys.stdout.write(json.dumps(dump(get_result), ensure_ascii=False))
-        break
-    elif status == "failed":
-        log("failed", task_id=task_id, error=str(getattr(get_result, "error", None)), full=dump(get_result))
-        sys.exit(1)
-    else:
-        time.sleep(3)
+            time.sleep(3)
+
+
+# First attempt: with audio
+outcome, data = run_generation(use_audio=True)
+
+# If audio was flagged as sensitive, retry without audio
+if outcome == "failed":
+    err_code, err_msg = data
+    if "AudioSensitive" in err_code or "audio" in err_code.lower():
+        log("retry_without_audio", reason=err_code)
+        emit("progress", status="retrying_without_audio", attempt=0, elapsed_s=0)
+        outcome, data = run_generation(use_audio=False)
+
+if outcome == "done":
+    emit("done", video_url=data)
+elif outcome == "failed":
+    _, err_msg = data
+    emit("error", message=err_msg)
+elif outcome == "create_error":
+    emit("error", message=data)

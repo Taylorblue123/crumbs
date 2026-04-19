@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MbtiAvatar } from '../components/MbtiAvatar'
 
-const COPY = [
+const VIDEO_COPY = [
   'TEACHING YOUR AVATAR SARCASM',
   'BRIBING THE LLM',
   'WRITING YOUR ROAST',
@@ -10,11 +10,32 @@ const COPY = [
   'ALMOST THERE WE PROMISE',
 ]
 
+const CARD_COPY = [
+  'READING YOUR LINES',
+  'WHAT DIDN\'T YOU SAY',
+  'YOUR 2AM THOUGHTS',
+  'DRAWING YOUR TOTEM',
+  'ALMOST THERE',
+]
+
 interface Props {
   mbtiType: string
+  genStatus?: string
+  genElapsed?: number
+  mode?: 'video' | 'card'
 }
 
-export function Transition2({ mbtiType }: Props) {
+function statusLabel(status?: string, elapsed?: number, mode?: string): string | null {
+  if (!status) return null
+  if (mode === 'card') return 'GENERATING YOUR CARD…'
+  if (status === 'creating') return 'SUBMITTING TASK…'
+  if (status === 'downloading') return 'DOWNLOADING VIDEO…'
+  const secs = elapsed ?? 0
+  return `RENDERING VIDEO… ${secs}S`
+}
+
+export function Transition2({ mbtiType, genStatus, genElapsed, mode = 'video' }: Props) {
+  const COPY = mode === 'card' ? CARD_COPY : VIDEO_COPY
   const [copyIndex, setCopyIndex] = useState(0)
 
   useEffect(() => {
@@ -22,7 +43,7 @@ export function Transition2({ mbtiType }: Props) {
       setCopyIndex((i) => (i + 1) % COPY.length)
     }, 3000)
     return () => clearInterval(id)
-  }, [])
+  }, [COPY.length])
 
   return (
     <motion.div
@@ -62,6 +83,22 @@ export function Transition2({ mbtiType }: Props) {
           </motion.p>
         </AnimatePresence>
       </div>
+
+      {/* Status line from backend */}
+      {statusLabel(genStatus, genElapsed) && (
+        <p
+          className="mt-6 text-crumbs-ink/60"
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '11px',
+            fontWeight: 500,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+          }}
+        >
+          {statusLabel(genStatus, genElapsed, mode)}
+        </p>
+      )}
     </motion.div>
   )
 }

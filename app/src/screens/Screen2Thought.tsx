@@ -5,27 +5,27 @@ import type { UploadResponse, PickedMbti } from '../api/types'
 const CARD_STYLES: Array<{
   bg: string
   text: string
-  eyebrow: string
+  accent: string
 }> = [
   {
     bg: 'var(--color-crumbs-yellow)',
     text: 'var(--color-crumbs-ink)',
-    eyebrow: 'var(--color-crumbs-pink)',
+    accent: 'var(--color-crumbs-pink)',
   },
   {
     bg: 'var(--color-crumbs-pink)',
     text: 'var(--color-crumbs-ink)',
-    eyebrow: 'var(--color-crumbs-yellow)',
+    accent: 'var(--color-crumbs-yellow)',
   },
   {
     bg: 'var(--color-crumbs-yellow)',
     text: 'var(--color-crumbs-pink)',
-    eyebrow: 'var(--color-crumbs-ink)',
+    accent: 'var(--color-crumbs-ink)',
   },
 ]
 
-const STACK_OFFSET_Y = 12
-const STACK_OFFSET_SCALE = 0.04
+const STACK_OFFSET_Y = 10
+const STACK_OFFSET_SCALE = 0.025
 
 interface Props {
   options: UploadResponse
@@ -58,53 +58,53 @@ export function Screen2Thought({ options, picked, onPick, onBack }: Props) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.18 }}
-      className="flex h-full w-full flex-col bg-crumbs-ink px-5 pt-8 pb-6"
+      className="flex h-full w-full flex-col bg-crumbs-ink px-4 pt-6 pb-6"
     >
-      {/* Back + Eyebrow */}
-      <div className="mb-2 flex items-center gap-3">
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={onBack}
-          className="cursor-pointer text-crumbs-yellow"
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '14px',
-            fontWeight: 700,
-            background: 'none',
-            border: 'none',
-          }}
-        >
-          ← BACK
-        </motion.button>
+      {/* Header row */}
+      <div className="flex items-center justify-between px-1 mb-3">
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={onBack}
+            className="cursor-pointer text-crumbs-yellow"
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '13px',
+              fontWeight: 700,
+              background: 'none',
+              border: 'none',
+            }}
+          >
+            ←
+          </motion.button>
+          <p
+            className="text-crumbs-pink"
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '11px',
+              fontWeight: 500,
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+            }}
+          >
+            PICK YOUR CRUMB
+          </p>
+        </div>
         <p
-          className="text-crumbs-pink"
+          className="text-crumbs-yellow"
           style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '11px',
-            fontWeight: 500,
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
+            fontFamily: 'var(--font-display)',
+            fontSize: '13px',
+            fontWeight: 400,
+            fontStyle: 'italic',
+            opacity: 0.6,
           }}
         >
-          PICK YOUR CRUMB
+          {deck.length} left
         </p>
       </div>
 
-      {/* Counter */}
-      <p
-        className="mb-5 text-crumbs-yellow"
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '14px',
-          fontWeight: 400,
-          fontStyle: 'italic',
-          opacity: 0.7,
-        }}
-      >
-        {deck.length} {deck.length === 1 ? 'thought' : 'thoughts'} left
-      </p>
-
-      {/* Card stack area */}
+      {/* Full-bleed card stack */}
       <div className="relative flex-1 min-h-0">
         <AnimatePresence mode="popLayout">
           {[...deck].reverse().map((originalIndex, visualIndex) => {
@@ -115,7 +115,7 @@ export function Screen2Thought({ options, picked, onPick, onBack }: Props) {
             return (
               <motion.div
                 key={`thought-${originalIndex}`}
-                className="absolute inset-x-0 top-0"
+                className="absolute inset-0"
                 style={{ zIndex: 10 - stackIndex }}
                 initial={{
                   y: stackIndex * STACK_OFFSET_Y,
@@ -136,57 +136,72 @@ export function Screen2Thought({ options, picked, onPick, onBack }: Props) {
                 transition={{ type: 'spring', stiffness: 300, damping: 28 }}
               >
                 <div
-                  className="relative flex flex-col justify-between overflow-hidden rounded-3xl p-6"
-                  style={{
-                    backgroundColor: style.bg,
-                    minHeight: 'clamp(260px, 44vh, 360px)',
-                  }}
+                  className="relative flex h-full flex-col justify-between overflow-hidden rounded-3xl p-6"
+                  style={{ backgroundColor: style.bg }}
                 >
-                  {/* MBTI eyebrow */}
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: '11px',
-                      fontWeight: 500,
-                      letterSpacing: '0.15em',
-                      textTransform: 'uppercase',
-                      color: style.eyebrow,
-                    }}
-                  >
-                    {picked.mbti}
-                  </span>
-
-                  {/* Thought — hero text */}
-                  <p
-                    className="my-auto py-6"
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: 'clamp(20px, 5.5vw, 28px)',
-                      fontStyle: 'italic',
-                      fontWeight: 400,
-                      color: style.text,
-                      lineHeight: 1.4,
-                      letterSpacing: '-0.02em',
-                    }}
-                  >
-                    "{options.thoughts[originalIndex]}"
-                  </p>
-
-                  {/* Card number */}
-                  {isTop && (
-                    <div
+                  {/* Top — MBTI badge + card indicator */}
+                  <div className="flex items-start justify-between">
+                    <span
                       style={{
                         fontFamily: 'var(--font-body)',
                         fontSize: '11px',
                         fontWeight: 500,
                         letterSpacing: '0.15em',
-                        color: style.text,
-                        opacity: 0.5,
+                        textTransform: 'uppercase' as const,
+                        color: style.accent,
                       }}
                     >
-                      {deck.indexOf(originalIndex) + 1} / {deck.length}
-                    </div>
-                  )}
+                      {picked.mbti}
+                    </span>
+                    {isTop && (
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '11px',
+                          fontWeight: 500,
+                          letterSpacing: '0.15em',
+                          color: style.text,
+                          opacity: 0.4,
+                        }}
+                      >
+                        {deck.indexOf(originalIndex) + 1} / {deck.length}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Center — thought quote, hero text */}
+                  <div className="flex-1 flex items-center justify-center py-8">
+                    <p
+                      className="text-center"
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: 'clamp(22px, 6vw, 32px)',
+                        fontStyle: 'italic',
+                        fontWeight: 400,
+                        color: style.text,
+                        lineHeight: 1.35,
+                        letterSpacing: '-0.02em',
+                      }}
+                    >
+                      "{options.thoughts[originalIndex]}"
+                    </p>
+                  </div>
+
+                  {/* Bottom label */}
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '11px',
+                      fontWeight: 500,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase' as const,
+                      color: style.text,
+                      opacity: 0.35,
+                      textAlign: 'center',
+                    }}
+                  >
+                    YOUR THOUGHT CRUMB
+                  </p>
                 </div>
               </motion.div>
             )
@@ -195,42 +210,37 @@ export function Screen2Thought({ options, picked, onPick, onBack }: Props) {
       </div>
 
       {/* Action buttons */}
-      <div className="mt-5 flex items-center justify-center gap-6">
-        {/* Skip */}
+      <div className="mt-4 flex items-center justify-center gap-6">
         <motion.button
           whileTap={{ scale: 0.9 }}
           transition={{ duration: 0.12 }}
           onClick={handleSkip}
-          className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border-3"
+          className="flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-3"
           style={{
-            borderColor: topStyle.eyebrow,
+            borderColor: topStyle.accent,
             backgroundColor: 'transparent',
           }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6l12 12" stroke={topStyle.eyebrow} strokeWidth="3" strokeLinecap="round" />
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6l12 12" stroke={topStyle.accent} strokeWidth="3" strokeLinecap="round" />
           </svg>
         </motion.button>
 
-        {/* Pick */}
         <motion.button
           whileTap={{ scale: 0.9 }}
           transition={{ duration: 0.12 }}
           onClick={handlePick}
-          className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-full"
-          style={{
-            backgroundColor: 'var(--color-crumbs-pink)',
-          }}
+          className="flex h-18 w-18 cursor-pointer items-center justify-center rounded-full"
+          style={{ backgroundColor: 'var(--color-crumbs-pink)' }}
         >
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
             <path d="M5 12l5 5L20 7" stroke="var(--color-crumbs-ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </motion.button>
       </div>
 
-      {/* Hint */}
       <p
-        className="mt-3 text-center"
+        className="mt-2 text-center"
         style={{
           fontFamily: 'var(--font-body)',
           fontSize: '11px',
@@ -238,7 +248,7 @@ export function Screen2Thought({ options, picked, onPick, onBack }: Props) {
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
           color: 'var(--color-crumbs-yellow)',
-          opacity: 0.35,
+          opacity: 0.3,
         }}
       >
         SKIP OR PICK YOUR CRUMB

@@ -51,18 +51,49 @@ CONSTRAINTS:
   fall into these categories, pick the next most characterful.
 - Do not invent or paraphrase quotes. Thoughts must be verbatim 
   (or verbatim excerpts of longer messages).
-- If fewer than 10 distinct messages are provided, return 
-  {"error": "insufficient_data"}.
+- If fewer than 3 distinct messages are provided, return
+  {"error": "insufficient_data"}. Even with just 3-5 messages,
+  do your best to generate a reading — less data just means
+  bolder guesses.
 - If the messages are in a language you cannot read confidently, 
   return {"error": "unsupported_language", "detected": "<language>"}.
 
+4. roast_line: A single punchy sentence that would make the user
+   screenshot this and send it to a friend. Written as a gentle
+   roast — specific, slightly unflattering, endearing.
+   - MUST contain a contradiction or paradox about the person.
+   - Use "you" framing: "You [do X] but [contradictory Y]."
+   - Maximum 20 words. Shorter is better.
+   - This is THE line people will use as their caption when sharing.
+   - Think: what would a witty friend say about this person that
+     would make everyone in the group chat go "STOP that's so them"?
+   - Examples of the right tone:
+     "Overthinks ordering coffee, underthinks life decisions."
+     "Gives amazing advice you absolutely do not follow."
+     "Main character energy with supporting character follow-through."
+
+5. type_label: A 2-4 word funny title/nickname for each MBTI
+   reading. This is NOT the standard MBTI name — it's a Crumbs-
+   original roast label. Format: "The [Adjective] [Noun]"
+   - Must be funny, slightly absurd, and memorable.
+   - Should make the user want to use it as their bio or caption.
+   - Must feel specific to THIS person, not generic MBTI.
+   - Examples of the right tone:
+     "The Spreadsheet Therapist" (INTJ who organizes feelings)
+     "The Beautiful Disaster" (ENFP who's charming but chaotic)
+     "The Accidental Therapist" (INFJ who everyone vents to)
+     "The Cozy Overthinker" (INFP lost in their own head)
+     "The Loveable Menace" (ENTP who causes fun problems)
+
 OUTPUT FORMAT:
-Return only valid JSON matching this schema. No preamble, no 
+Return only valid JSON matching this schema. No preamble, no
 commentary, no markdown fences.
 
 {
   "mbti": ["XXXX", "XXXX", "XXXX"],
   "description": ["...", "...", "..."],
+  "roast_line": ["...", "...", "..."],
+  "type_label": ["...", "...", "..."],
   "thoughts": ["...", "...", "..."]
 }
 
@@ -284,4 +315,13 @@ Description: {description}
 Thoughts: {thoughts}
 
 Pick the plot template, then generate the script.
+
+IMPORTANT — BRANDING REQUIREMENT:
+The very last frame (final 1-2 seconds) of the video MUST show:
+- The text "CRUMBS" in large bold letters
+- Below it: "get your personality roasted"
+- Below that: "crumbs.app"
+This is the brand closing card. It should feel like an end card,
+not part of the narrative. Include this as the final beat after
+the CLOSING_TAG.
 `

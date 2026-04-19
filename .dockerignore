@@ -1,0 +1,13 @@
+node_modules
+app/node_modules
+app/dist
+dist
+data
+.env
+.venv
+__pycache__
+*.log
+.DS_Store
+.git
+crumbs-dist
+crumbs-dist.tar.gz

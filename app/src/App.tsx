@@ -3,10 +3,12 @@ import { AnimatePresence } from 'framer-motion'
 import type { Step, UploadResponse, PickedFull } from './api/types'
 import { useUpload } from './hooks/useUpload'
 import { useGenerate } from './hooks/useGenerate'
+import { generateTotem } from './api/client'
 import { Onboarding } from './screens/Onboarding'
 import { Transition1 } from './screens/Transition1'
 import { Screen1Mbti } from './screens/Screen1Mbti'
 import { Screen2Thought } from './screens/Screen2Thought'
+import { ScreenCard } from './screens/ScreenCard'
 import { Transition2 } from './screens/Transition2'
 import { Screen3Video } from './screens/Screen3Video'
 import { Screen4Share } from './screens/Screen4Share'
@@ -21,6 +23,11 @@ export default function App() {
   }, [])
 
   const onUploadSuccess = useCallback((data: UploadResponse) => {
+    if (!data.mbti?.length || !data.description?.length || !data.thoughts?.length) {
+      const file = pendingFileRef.current
+      setStep({ kind: 'error', message: 'Analysis couldn\'t extract enough info. Try a different video?', retryTo: 'transition1', _file: file ?? undefined })
+      return
+    }
     setStep({ kind: 'mbti', options: data })
   }, [])
 
@@ -54,7 +61,15 @@ export default function App() {
     }
   }, [])
 
-  const { start: startGenerate } = useGenerate(onGenerateSuccess, onGenerateError)
+  const onGenerateProgress = useCallback((p: { status: string; elapsed_s: number }) => {
+    setStep((s) =>
+      s.kind === 'transition2'
+        ? { ...s, genStatus: p.status, genElapsed: Math.round(p.elapsed_s) }
+        : s,
+    )
+  }, [])
+
+  const { start: startGenerate } = useGenerate(onGenerateSuccess, onGenerateError, onGenerateProgress)
 
   const handleFileSelected = (file: File) => {
     pendingFileRef.current = file
@@ -70,6 +85,8 @@ export default function App() {
       picked: {
         mbti: step.options.mbti[index],
         description: step.options.description[index],
+        roastLine: step.options.roast_line?.[index] ?? '',
+        typeLabel: step.options.type_label?.[index] ?? '',
       },
     })
   }
@@ -78,8 +95,29 @@ export default function App() {
     if (step.kind !== 'thought') return
     const picked = { ...step.picked, thought }
     pendingPickedRef.current = picked
+    setStep({ kind: 'card-loading', picked })
+
+    // Generate totem in background, then show card
+    generateTotem(picked.mbti, picked.description, thought)
+      .then((totemUrl) => {
+        setStep((s) =>
+          s.kind === 'card-loading' ? { kind: 'card', picked, totemUrl } : s,
+        )
+      })
+      .catch(() => {
+        // Totem failed — show card without totem (Phase 1 fallback with avatar)
+        setStep((s) =>
+          s.kind === 'card-loading' ? { kind: 'card', picked } : s,
+        )
+      })
+  }
+
+  const handleWantVideo = () => {
+    if (step.kind !== 'card') return
+    const picked = step.picked
+    pendingPickedRef.current = picked
     setStep({ kind: 'transition2', picked })
-    startGenerate(picked.mbti, picked.description, thought)
+    startGenerate(picked.mbti, picked.description, picked.thought)
   }
 
   const handleBack = () => {
@@ -131,8 +169,33 @@ export default function App() {
           />
         )}
 
+        {step.kind === 'card-loading' && (
+          <Transition2
+            key="card-loading"
+            mbtiType={step.picked.mbti}
+            mode="card"
+            genStatus="generating"
+            genElapsed={0}
+          />
+        )}
+
+        {step.kind === 'card' && (
+          <ScreenCard
+            key="card"
+            picked={step.picked}
+            totemUrl={step.totemUrl}
+            onWantVideo={handleWantVideo}
+            onStartOver={handleStartOver}
+          />
+        )}
+
         {step.kind === 'transition2' && (
-          <Transition2 key="transition2" mbtiType={step.picked.mbti} />
+          <Transition2
+            key="transition2"
+            mbtiType={step.picked.mbti}
+            genStatus={step.genStatus}
+            genElapsed={step.genElapsed}
+          />
         )}
 
         {(step.kind === 'video' || step.kind === 'share') && (

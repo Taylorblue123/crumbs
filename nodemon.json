@@ -1,0 +1,4 @@
+{
+  "watch": ["server.js", "prompts.js", "generate.py"],
+  "ignore": ["data/", "dist/", "app/", "node_modules/", ".venv/"]
+}

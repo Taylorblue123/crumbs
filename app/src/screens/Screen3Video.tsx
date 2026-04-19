@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { MbtiAvatar } from '../components/MbtiAvatar'
 import type { PickedFull } from '../api/types'
@@ -12,6 +12,11 @@ interface Props {
 
 export function Screen3Video({ videoUrl, picked, onShare, onStartOver }: Props) {
   const [videoError, setVideoError] = useState(false)
+
+  const handleVideoPlay = useCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget
+    video.muted = false
+  }, [])
 
   return (
     <motion.div
@@ -44,6 +49,7 @@ export function Screen3Video({ videoUrl, picked, onShare, onStartOver }: Props) 
             loop
             muted
             playsInline
+            onPlay={handleVideoPlay}
             onError={() => setVideoError(true)}
             className="h-full w-full rounded-2xl object-contain"
           />
