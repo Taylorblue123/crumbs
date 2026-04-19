@@ -430,7 +430,7 @@ export function ScreenCard({ picked, totemUrl, onWantVideo, onStartOver }: Props
                 SHARE CARD
               </motion.button>
 
-              {/* Save to photos */}
+              {/* Save to photos — primary path for Instagram/WeChat */}
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => { handleSave(); setShowShareSheet(false); }}
@@ -445,6 +445,17 @@ export function ScreenCard({ picked, totemUrl, onWantVideo, onStartOver }: Props
               >
                 SAVE TO PHOTOS
               </motion.button>
+              <p
+                className="text-center text-crumbs-ink"
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '11px',
+                  opacity: 0.45,
+                  marginTop: '4px',
+                }}
+              >
+                then post it to your story or moments
+              </p>
 
               {/* Copy link */}
               <motion.button
