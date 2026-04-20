@@ -49,7 +49,11 @@ if len(sys.argv) >= 3 and sys.argv[2]:
     if os.path.exists(img_path):
         with open(img_path, "rb") as f:
             b64 = base64.b64encode(f.read()).decode()
-        content.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}})
+        content.append({
+            "type": "image_url",
+            "image_url": {"url": f"data:image/png;base64,{b64}"},
+            "role": "reference_image",
+        })
         log("reference_image", path=img_path, b64_bytes=len(b64))
     else:
         log("reference_image_missing", path=img_path)
@@ -68,7 +72,9 @@ def run_generation(use_audio):
             content=content,
             generate_audio=use_audio,
             ratio="9:16",
+            resolution="720p",
             duration=15,
+            watermark=False,
         )
     except Exception as e:
         log("create_failed", error=repr(e))
