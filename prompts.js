@@ -200,14 +200,26 @@ GLOBAL RULES for every shot:
 TEXT CONTENT RULES (what goes in the overlays)
 ==================================================================
 - Declarative sentences only. No hedging: no "might," "sometimes," 
-  "perhaps," "it seems like." Every line is a verdict.
-- 4–8 words per visible line on a 9:16 vertical screen.
-- Echo the user's own vocabulary from their thoughts.
-- One beat must be genuinely vulnerable — the "screenshot line" 
-  that the user crops and sends to a friend.
-- Quote user's thoughts verbatim. Do not paraphrase.
+  "perhaps," "it seems like," "maybe." Every line is a verdict.
+- 4–8 words per visible line on a 9:16 vertical screen. Write so 
+  text breaks naturally — do not orphan key words.
+- Echo the user's own vocabulary from their thoughts. Match their 
+  register — casual if they're casual, formal if they're formal.
+- Specific over general. Reference real details — numbers, quotes, 
+  patterns, dates — not generic sentiments.
+- Quote user's thoughts verbatim. Do not paraphrase, summarize, 
+  or clean up. If referencing a thought, use the exact words.
 - Affectionate, not cruel. The user should feel seen, not attacked.
 - No emojis. No hashtags.
+
+THE SCREENSHOT LINE:
+One text overlay in the video must be the "screenshot line" — the 
+line the user wants to freeze, crop, and send to a friend. It must:
+- Be under 15 words
+- Be self-contained (makes sense without the rest of the video)
+- Be specific to THIS user but emotionally universal
+- Appear in Shot 4 or Shot 5 (the emotional peak or verdict)
+Every other text overlay exists to set up this one line.
 
 ==================================================================
 TEMPLATE BEATS — adapt to your chosen template
@@ -270,13 +282,28 @@ fluid."
 DO NOT
 ==================================================================
 - Write a screenplay or creative brief. Write a Seedance prompt.
-- Use vague visual words: "cinematic feel," "aesthetic," "vibes."
+- Use vague visual words: "cinematic feel," "aesthetic," "vibes,"
+  "atmospheric," "moody." Replace with specific lighting, color, 
+  and camera instructions.
 - Describe emotions abstractly — show through pose and expression.
-- Use MBTI stereotypes or explain what MBTI is.
-- Use therapy-speak or Gen Z filler language.
+- Summarize or paraphrase thoughts. Quote verbatim or do not 
+  reference them at all.
+- Invent facts not present in the inputs.
+- Use MBTI stereotypes ("as an INTJ you...", "typical INFP 
+  behavior"). Write about the person, not the type.
+- Explain what MBTI is.
+- Include meta-commentary about the video or generation process.
+- Use Gen Z filler: "the girls that get it," "it's giving," "if 
+  you know you know," "not me [doing thing]," "no because."
+- Use therapy-speak: "inner child," "healing journey," "holding 
+  space," "sitting with," "trauma response."
+- Use AI-slop constructions: "It's not about X. It's about Y." 
+  "You're not just X. You're Y." (The reframe in time_capsule 
+  "You're not [neg]. You're [pos]." is the ONE allowed exception.)
 - Stack more than 2 camera movements across the whole video.
 - Include intense/fast actions — the avatar is a gentle character.
-- Produce text overlays that could apply to any user.
+- Produce text overlays that could apply to any user. Every line 
+  must be anchored in this specific person's data.
 
 ==================================================================
 EXAMPLE OUTPUT (for reference only — do not copy)
