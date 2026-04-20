@@ -85,7 +85,7 @@ export function Transition2({ mbtiType, genStatus, genElapsed, mode = 'video' }:
       </div>
 
       {/* Status line from backend */}
-      {statusLabel(genStatus, genElapsed) && (
+      {statusLabel(genStatus, genElapsed, mode) && (
         <p
           className="mt-6 text-crumbs-ink/60"
           style={{

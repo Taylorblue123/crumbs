@@ -19,7 +19,7 @@ export interface PickedFull extends PickedMbti {
 
 export type Step =
   | { kind: 'onboarding' }
-  | { kind: 'transition1'; phase: 'uploading' | 'analyzing'; uploadPct?: number }
+  | { kind: 'transition1'; uploadPct?: number }
   | { kind: 'mbti'; options: UploadResponse }
   | { kind: 'thought'; options: UploadResponse; picked: PickedMbti }
   | { kind: 'card-loading'; picked: PickedFull }
@@ -27,4 +27,4 @@ export type Step =
   | { kind: 'transition2'; picked: PickedFull; genStatus?: string; genElapsed?: number }
   | { kind: 'video'; videoUrl: string; picked: PickedFull }
   | { kind: 'share'; videoUrl: string; picked: PickedFull }
-  | { kind: 'error'; message: string; retryTo: Step['kind']; _picked?: PickedFull; _file?: File }
+  | { kind: 'error'; message: string; _picked?: PickedFull; _file?: File }

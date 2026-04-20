@@ -25,7 +25,7 @@ export default function App() {
   const onUploadSuccess = useCallback((data: UploadResponse) => {
     if (!data.mbti?.length || !data.description?.length || !data.thoughts?.length) {
       const file = pendingFileRef.current
-      setStep({ kind: 'error', message: 'Analysis couldn\'t extract enough info. Try a different video?', retryTo: 'transition1', _file: file ?? undefined })
+      setStep({ kind: 'error', message: 'Analysis couldn\'t extract enough info. Try a different video?', _file: file ?? undefined })
       return
     }
     setStep({ kind: 'mbti', options: data })
@@ -33,7 +33,7 @@ export default function App() {
 
   const onUploadError = useCallback(() => {
     const file = pendingFileRef.current
-    setStep({ kind: 'error', message: 'Upload failed. Try again?', retryTo: 'transition1', _file: file ?? undefined })
+    setStep({ kind: 'error', message: 'Upload failed. Try again?', _file: file ?? undefined })
   }, [])
 
   const { start: startUpload } = useUpload(onProgress, onUploadSuccess, onUploadError)
@@ -55,9 +55,9 @@ export default function App() {
   const onGenerateError = useCallback(() => {
     const picked = pendingPickedRef.current
     if (picked) {
-      setStep({ kind: 'error', message: 'Video generation failed.', retryTo: 'transition2', _picked: picked })
+      setStep({ kind: 'error', message: 'Video generation failed.', _picked: picked })
     } else {
-      setStep({ kind: 'error', message: 'Video generation failed.', retryTo: 'onboarding' })
+      setStep({ kind: 'error', message: 'Video generation failed.' })
     }
   }, [])
 
@@ -73,7 +73,7 @@ export default function App() {
 
   const handleFileSelected = (file: File) => {
     pendingFileRef.current = file
-    setStep({ kind: 'transition1', phase: 'uploading', uploadPct: 0 })
+    setStep({ kind: 'transition1', uploadPct: 0 })
     startUpload(file)
   }
 
@@ -146,7 +146,6 @@ export default function App() {
         {step.kind === 'transition1' && (
           <Transition1
             key="transition1"
-            phase={step.phase}
             uploadPct={step.uploadPct}
           />
         )}
@@ -234,7 +233,7 @@ export default function App() {
                 } else if (step._file) {
                   // Retry upload
                   pendingFileRef.current = step._file
-                  setStep({ kind: 'transition1', phase: 'uploading', uploadPct: 0 })
+                  setStep({ kind: 'transition1', uploadPct: 0 })
                   startUpload(step._file)
                 } else {
                   handleStartOver()

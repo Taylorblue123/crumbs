@@ -21,45 +21,51 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   })
 }
 
-async function renderCardToBlob(
-  picked: PickedFull,
-  totemUrl?: string,
-): Promise<Blob> {
-  const W = 1080
-  const H = 1080
-  const canvas = document.createElement('canvas')
-  canvas.width = W
-  canvas.height = H
-  const ctx = canvas.getContext('2d')!
-
-  // Background — cream parchment
-  ctx.fillStyle = '#FFF8E7'
-  ctx.fillRect(0, 0, W, H)
-
-  // Layer 1: Totem frame (AI-generated, fills upper 65%)
-  if (totemUrl) {
-    try {
-      const totem = await loadImage(totemUrl)
-      // Draw totem scaled to fill width, cropped to upper portion
-      const scale = W / totem.width
-      const drawH = Math.min(totem.height * scale, H * 0.65)
-      ctx.drawImage(totem, 0, 0, totem.width, drawH / scale, 0, 0, W, drawH)
-    } catch { /* skip totem */ }
+/** Draws word-wrapped text centred at x, starting at y. Returns the new y after the last line. */
+function wrapText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number,
+): number {
+  const words = text.split(' ')
+  let line = ''
+  for (const word of words) {
+    const test = line + (line ? ' ' : '') + word
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y)
+      line = word
+      y += lineHeight
+    } else {
+      line = test
+    }
   }
+  if (line) ctx.fillText(line, x, y)
+  return y
+}
 
-  // Bottom panel — solid color block for text
+async function drawTotemLayer(ctx: CanvasRenderingContext2D, W: number, H: number, totemUrl: string) {
+  try {
+    const totem = await loadImage(totemUrl)
+    const scale = W / totem.width
+    const drawH = Math.min(totem.height * scale, H * 0.65)
+    ctx.drawImage(totem, 0, 0, totem.width, drawH / scale, 0, 0, W, drawH)
+  } catch { /* skip totem */ }
+}
+
+function drawTextPanel(ctx: CanvasRenderingContext2D, W: number, H: number, picked: PickedFull) {
   const panelY = H * 0.58
-  const panelH = H - panelY
   ctx.fillStyle = '#0A0F3D'
-  ctx.fillRect(0, panelY, W, panelH)
+  ctx.fillRect(0, panelY, W, H - panelY)
 
-  // MBTI type — huge
+  // MBTI type
   ctx.fillStyle = '#FFE14D'
   ctx.font = '900 110px "Fraunces", Georgia, serif'
   ctx.textAlign = 'center'
   ctx.fillText(picked.mbti, W / 2, panelY + 95)
 
-  // Type label — right below MBTI
   let y = panelY + 130
   if (picked.typeLabel) {
     ctx.fillStyle = '#FF2E63'
@@ -74,19 +80,7 @@ async function renderCardToBlob(
   ctx.fillStyle = '#FFE14D'
   ctx.font = '400 26px "Space Grotesk", system-ui, sans-serif'
   const roast = picked.roastLine || picked.description.split('.')[0] + '.'
-  const roastWords = roast.split(' ')
-  let line = ''
-  for (const word of roastWords) {
-    const test = line + (line ? ' ' : '') + word
-    if (ctx.measureText(test).width > W - 160 && line) {
-      ctx.fillText(line, W / 2, y)
-      line = word
-      y += 36
-    } else {
-      line = test
-    }
-  }
-  if (line) ctx.fillText(line, W / 2, y)
+  y = wrapText(ctx, roast, W / 2, y, W - 160, 36)
 
   // Divider
   y += 30
@@ -109,29 +103,16 @@ async function renderCardToBlob(
   y += 32
   ctx.fillStyle = '#FFE14D'
   ctx.font = 'italic 400 24px "Fraunces", Georgia, serif'
-  const gemText = `"${picked.thought}"`
-  const gemWords = gemText.split(' ')
-  let gLine = ''
-  for (const word of gemWords) {
-    const test = gLine + (gLine ? ' ' : '') + word
-    if (ctx.measureText(test).width > W - 180 && gLine) {
-      ctx.fillText(gLine, W / 2, y)
-      gLine = word
-      y += 34
-    } else {
-      gLine = test
-    }
-  }
-  if (gLine) ctx.fillText(gLine, W / 2, y)
+  wrapText(ctx, `"${picked.thought}"`, W / 2, y, W - 180, 34)
+}
 
-  // Branding bar at bottom
+async function drawBranding(ctx: CanvasRenderingContext2D, W: number, H: number) {
   const brandY = H - 80
   ctx.fillStyle = '#FFE14D'
   ctx.globalAlpha = 0.08
   ctx.fillRect(0, brandY, W, 80)
   ctx.globalAlpha = 1
 
-  // Logo + slogan (left-aligned)
   ctx.fillStyle = '#FFE14D'
   ctx.textAlign = 'left'
   ctx.font = '700 24px "Fraunces", Georgia, serif'
@@ -141,21 +122,38 @@ async function renderCardToBlob(
   ctx.fillText('get your personality roasted', 40, brandY + 54)
   ctx.globalAlpha = 1
 
-  // Domain (right side, above QR)
   ctx.textAlign = 'right'
   ctx.font = '500 14px "Space Grotesk", system-ui, sans-serif'
   ctx.globalAlpha = 0.6
   ctx.fillText('scan to try', W - 85, brandY + 28)
   ctx.globalAlpha = 1
 
-  // Real QR code (right corner)
   try {
     const qrImg = await loadImage('/qr-crumbs.png')
-    const qrSize = 56
-    ctx.drawImage(qrImg, W - qrSize - 25, brandY + 10, qrSize, qrSize)
+    ctx.drawImage(qrImg, W - 56 - 25, brandY + 10, 56, 56)
   } catch { /* skip QR */ }
 
   ctx.textAlign = 'center'
+}
+
+async function renderCardToBlob(
+  picked: PickedFull,
+  totemUrl?: string,
+): Promise<Blob> {
+  const W = 1080
+  const H = 1080
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  canvas.height = H
+  const ctx = canvas.getContext('2d')!
+
+  // Background — cream parchment
+  ctx.fillStyle = '#FFF8E7'
+  ctx.fillRect(0, 0, W, H)
+
+  if (totemUrl) await drawTotemLayer(ctx, W, H, totemUrl)
+  drawTextPanel(ctx, W, H, picked)
+  await drawBranding(ctx, W, H)
 
   return new Promise((resolve) => {
     canvas.toBlob((blob) => resolve(blob!), 'image/png')

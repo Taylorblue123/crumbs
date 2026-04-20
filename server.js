@@ -8,6 +8,7 @@ import { execFile, spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { promisify } from 'node:util';
 import { randomUUID } from 'node:crypto';
+import { Readable } from 'node:stream';
 import { OCR_PROMPT, ANALYSIS_PROMPT, videoPromptPrompt } from './prompts.js';
 
 const execFileP = promisify(execFile);
@@ -71,6 +72,7 @@ app.post('/api/upload', upload.single('video'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'no video file' });
   }
+  let framesDir = null;
   try {
     const { stdout } = await execFileP(FFPROBE_BIN, [
       '-v', 'error',
@@ -104,7 +106,7 @@ app.post('/api/upload', upload.single('video'), async (req, res) => {
 
     console.log('[upload] picked indices:', indices);
     const jobId = randomUUID();
-    const framesDir = path.join(DATA_DIR, jobId);
+    framesDir = path.join(DATA_DIR, jobId);
     fs.mkdirSync(framesDir, { recursive: true });
 
     const selectExpr = indices.map((i) => `eq(n\\,${i})`).join('+');
@@ -197,6 +199,10 @@ app.post('/api/upload', upload.single('video'), async (req, res) => {
     res.json(response);
   } catch (err) {
     res.status(500).json({ error: err.message, stderr: err.stderr });
+  } finally {
+    // Clean up temp files regardless of success or failure
+    if (framesDir) fs.rm(framesDir, { recursive: true, force: true }, () => {});
+    if (req.file?.path) fs.unlink(req.file.path, () => {});
   }
 });
 
@@ -258,8 +264,6 @@ app.post('/api/generate-totem', express.json(), async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-const PLOTS = ['time_capsule', 'prophecy', 'reveal'];
 
 app.get('/api/generate', async (req, res) => {
   const { mbti, description } = req.query;
@@ -367,22 +371,36 @@ app.get('/api/generate', async (req, res) => {
   });
 });
 
-// Proxy endpoint: fetch video from upstream URL and stream to client
+// Proxy endpoint: fetch video from upstream URL and stream to client.
+// Forwards Range headers so HTML5 video players can seek without buffering the full file.
 app.get('/api/generate/video', async (req, res) => {
   const { url } = req.query;
   if (!url) return res.status(400).json({ error: 'missing url param' });
   console.log('[generate/video] proxying:', url.slice(0, 120) + '…');
   try {
-    const upstream = await fetch(url);
+    const upstreamHeaders = {};
+    if (req.headers.range) upstreamHeaders['range'] = req.headers.range;
+
+    const upstream = await fetch(url, { headers: upstreamHeaders });
     console.log('[generate/video] upstream status:', upstream.status, 'content-type:', upstream.headers.get('content-type'));
-    if (!upstream.ok) {
+    if (!upstream.ok && upstream.status !== 206) {
       return res.status(502).json({ error: `upstream ${upstream.status}` });
     }
+
+    // Mirror the upstream status (200 or 206 Partial Content)
+    res.status(upstream.status);
     res.type('video/mp4');
+    res.setHeader('Accept-Ranges', 'bytes');
+
+    const forward = ['content-length', 'content-range', 'last-modified', 'etag'];
+    for (const h of forward) {
+      const v = upstream.headers.get(h);
+      if (v) res.setHeader(h === 'content-range' ? 'Content-Range' : h, v);
+    }
+
     const len = upstream.headers.get('content-length');
-    if (len) res.setHeader('Content-Length', len);
-    console.log('[generate/video] streaming', len ? `${len} bytes` : 'unknown size');
-    const { Readable } = await import('node:stream');
+    console.log('[generate/video] streaming', len ? `${len} bytes` : 'unknown size', upstream.status === 206 ? '(partial)' : '');
+
     Readable.fromWeb(upstream.body).pipe(res);
   } catch (err) {
     console.error('[generate/video] error', err);
