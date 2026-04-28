@@ -15,11 +15,10 @@ const COPY = [
 ]
 
 interface Props {
-  phase: 'uploading' | 'analyzing'
   uploadPct?: number
 }
 
-export function Transition1({ phase, uploadPct = 0 }: Props) {
+export function Transition1({ uploadPct = 0 }: Props) {
   const [avatarType, setAvatarType] = useState(MBTI_TYPES[0])
   const [copyIndex, setCopyIndex] = useState(0)
 
@@ -37,7 +36,7 @@ export function Transition1({ phase, uploadPct = 0 }: Props) {
     return () => clearInterval(id)
   }, [])
 
-  const barWidth = phase === 'analyzing' ? 100 : uploadPct
+  const barWidth = uploadPct
 
   return (
     <motion.div

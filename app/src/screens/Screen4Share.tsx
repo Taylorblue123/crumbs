@@ -7,6 +7,8 @@ interface Props {
 }
 
 export function Screen4Share({ videoUrl, onClose, onDone }: Props) {
+  const SHARE_TEXT = 'Get your personality roasted → crumbs-production.up.railway.app'
+
   const handleSaveVideo = async () => {
     const a = document.createElement('a')
     a.href = videoUrl
@@ -14,28 +16,35 @@ export function Screen4Share({ videoUrl, onClose, onDone }: Props) {
     a.click()
   }
 
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-    } catch {
-      // fallback: do nothing
-    }
-  }
-
-  const handleWebShare = async () => {
+  const handleShareVideo = async () => {
     try {
       const res = await fetch(videoUrl)
       const blob = await res.blob()
       const file = new File([blob], 'crumbs-roast.mp4', { type: 'video/mp4' })
 
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'My Crumbs Roast' })
+        await navigator.share({
+          files: [file],
+          title: 'My Crumbs Roast',
+          text: SHARE_TEXT,
+        })
       } else {
-        // Fallback: just share URL
-        await navigator.share({ title: 'My Crumbs Roast', url: window.location.href })
+        await navigator.share({
+          title: 'My Crumbs Roast',
+          text: SHARE_TEXT,
+          url: window.location.href,
+        })
       }
     } catch {
       // User cancelled or not supported
+    }
+  }
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.href}\n${SHARE_TEXT}`)
+    } catch {
+      // fallback
     }
   }
 
@@ -66,7 +75,7 @@ export function Screen4Share({ videoUrl, onClose, onDone }: Props) {
 
       {/* Header */}
       <h2
-        className="mb-6 text-crumbs-ink"
+        className="mb-5 text-crumbs-ink"
         style={{
           fontFamily: 'var(--font-display)',
           fontSize: '32px',
@@ -80,7 +89,24 @@ export function Screen4Share({ videoUrl, onClose, onDone }: Props) {
       </h2>
 
       {/* Buttons */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
+        {/* Primary: Share video */}
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={handleShareVideo}
+          className="w-full cursor-pointer rounded-full bg-crumbs-ink py-4 text-crumbs-yellow"
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '14px',
+            fontWeight: 700,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+          }}
+        >
+          SHARE VIDEO
+        </motion.button>
+
+        {/* Save video */}
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleSaveVideo}
@@ -96,10 +122,11 @@ export function Screen4Share({ videoUrl, onClose, onDone }: Props) {
           SAVE VIDEO
         </motion.button>
 
+        {/* Copy link */}
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleCopyLink}
-          className="w-full cursor-pointer rounded-full bg-crumbs-ink py-4 text-crumbs-yellow"
+          className="w-full cursor-pointer rounded-full border-2 border-crumbs-ink bg-transparent py-4 text-crumbs-ink"
           style={{
             fontFamily: 'var(--font-body)',
             fontSize: '14px',
@@ -110,28 +137,25 @@ export function Screen4Share({ videoUrl, onClose, onDone }: Props) {
         >
           COPY LINK
         </motion.button>
-
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={handleWebShare}
-          className="w-full cursor-pointer rounded-full border-2 border-crumbs-ink bg-transparent py-4 text-crumbs-ink"
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '14px',
-            fontWeight: 700,
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-          }}
-        >
-          MORE OPTIONS
-        </motion.button>
       </div>
+
+      {/* Brand reminder */}
+      <p
+        className="mt-4 text-center text-crumbs-ink"
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: '12px',
+          opacity: 0.5,
+        }}
+      >
+        crumbs-production.up.railway.app — get your personality roasted
+      </p>
 
       {/* Done */}
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={onDone}
-        className="mt-6 w-full cursor-pointer text-center text-crumbs-ink"
+        className="mt-3 w-full cursor-pointer text-center text-crumbs-ink"
         style={{
           fontFamily: 'var(--font-body)',
           fontSize: '14px',

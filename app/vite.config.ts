@@ -7,9 +7,15 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:4184',
         changeOrigin: true,
+        timeout: 600_000,
+        proxyTimeout: 600_000,
       },
     },
+  },
+  build: {
+    outDir: '../dist',
+    emptyOutDir: true,
   },
 })

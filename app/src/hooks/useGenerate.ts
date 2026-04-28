@@ -1,9 +1,11 @@
 import { useCallback, useRef } from 'react'
 import { generateVideo } from '../api/client'
+import type { GenerateProgress } from '../api/client'
 
 export function useGenerate(
   onSuccess: (videoUrl: string) => void,
   onError: (err: Error) => void,
+  onProgress?: (p: GenerateProgress) => void,
 ) {
   const ctrlRef = useRef<AbortController | null>(null)
 
@@ -13,7 +15,7 @@ export function useGenerate(
       const ctrl = new AbortController()
       ctrlRef.current = ctrl
 
-      generateVideo(mbti, description, thought, ctrl.signal)
+      generateVideo(mbti, description, thought, onProgress, ctrl.signal)
         .then((url) => {
           if (!ctrl.signal.aborted) onSuccess(url)
         })
@@ -21,7 +23,7 @@ export function useGenerate(
           if (!ctrl.signal.aborted) onError(err)
         })
     },
-    [onSuccess, onError],
+    [onSuccess, onError, onProgress],
   )
 
   const cancel = useCallback(() => {

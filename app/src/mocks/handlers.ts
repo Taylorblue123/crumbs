@@ -49,16 +49,37 @@ export const handlers = [
     return HttpResponse.json(MOCK_RESPONSE)
   }),
 
-  http.get('/api/generate', async () => {
-    await delay(3000)
-    // Try to return a real sample video for demo; fall back to minimal MP4
+  http.get('/api/generate', () => {
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({
+      async start(controller) {
+        // Simulate progress events
+        const events = [
+          { event: 'progress', data: { status: 'creating', attempt: 0, elapsed_s: 0 } },
+          { event: 'progress', data: { status: 'running', attempt: 1, elapsed_s: 3 } },
+          { event: 'progress', data: { status: 'running', attempt: 2, elapsed_s: 6 } },
+          { event: 'done', data: { video_url: '/__mock_video__' } },
+        ]
+        for (const e of events) {
+          await delay(1000)
+          controller.enqueue(encoder.encode(`event: ${e.event}\ndata: ${JSON.stringify(e.data)}\n\n`))
+        }
+        controller.close()
+      },
+    })
+    return new HttpResponse(stream, {
+      headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
+    })
+  }),
+
+  http.get('/api/generate/video', async () => {
+    await delay(500)
     try {
       const buf = base64ToArrayBuffer(MINIMAL_MP4_BASE64)
       return new HttpResponse(buf, {
         headers: { 'Content-Type': 'video/mp4' },
       })
     } catch {
-      // Absolute fallback — empty response with correct type
       return new HttpResponse(new ArrayBuffer(0), {
         headers: { 'Content-Type': 'video/mp4' },
       })
