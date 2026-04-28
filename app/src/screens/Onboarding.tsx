@@ -47,12 +47,15 @@ export function Onboarding({ onFileSelected }: Props) {
     return () => clearInterval(timer)
   }, [page])
 
-  const [count, setCount] = useState(0)
+  // Stable session-scoped jitter — set once on mount, never re-rolls on re-render.
+  // 3000 base + ~0-800 random offset emulates "today's drops" without flickering.
+  const [count, setCount] = useState<number | null>(null)
   useEffect(() => {
+    const jitter = Math.floor(Math.random() * 800)
     fetch(`${import.meta.env.VITE_API_BASE ?? '/api'}/stats`)
       .then(r => r.json())
-      .then(d => setCount(3000 + Math.floor(Math.random() * 800) + (d.count || 0)))
-      .catch(() => {})
+      .then(d => setCount(3000 + jitter + (d.count || 0)))
+      .catch(() => setCount(3000 + jitter))
   }, [])
   const current = EXAMPLES[exampleIndex]
 
@@ -67,7 +70,7 @@ export function Onboarding({ onFileSelected }: Props) {
           transition={{ duration: 0.18 }}
           className="relative flex h-full w-full flex-col overflow-hidden bg-crumbs-ink"
         >
-          {/* Wordmark — absolute top-left, overlays card */}
+          {/* Wordmark — absolute top-left, with ink chip behind for contrast on yellow cards */}
           <motion.div
             className="absolute left-6 top-8 z-20"
             initial={{ opacity: 0 }}
@@ -81,7 +84,10 @@ export function Onboarding({ onFileSelected }: Props) {
                 fontSize: '28px',
                 fontWeight: 700,
                 letterSpacing: '-0.02em',
-                textShadow: '0 2px 8px rgba(10,15,61,0.3)',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                backgroundColor: 'var(--color-crumbs-ink)',
+                display: 'inline-block',
               }}
             >
               CRUMBS
@@ -202,7 +208,7 @@ export function Onboarding({ onFileSelected }: Props) {
             </AnimatePresence>
           </motion.div>
 
-          {/* Bottom bar — counter + CTA */}
+          {/* Bottom bar — counter + value bridge + CTA + page indicator */}
           <motion.div
             className="px-5 pb-8"
             initial={{ opacity: 0 }}
@@ -218,7 +224,7 @@ export function Onboarding({ onFileSelected }: Props) {
                 letterSpacing: '0.08em',
               }}
             >
-              ✦ {count.toLocaleString()} crumbs dropped today
+              ✦ {(count ?? 3200).toLocaleString()} crumbs dropped today
             </p>
             <motion.button
               whileTap={{ scale: 0.97 }}
@@ -235,6 +241,39 @@ export function Onboarding({ onFileSelected }: Props) {
             >
               I WANT MY ROAST
             </motion.button>
+            {/* Value-prop bridge — explains WHAT before HOW */}
+            <p
+              className="mt-2 text-center text-crumbs-yellow"
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '12px',
+                opacity: 0.55,
+                lineHeight: 1.4,
+              }}
+            >
+              we read the messages you send yourself
+            </p>
+            {/* Page indicator dots */}
+            <div className="mt-3 flex items-center justify-center gap-1.5">
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--color-crumbs-yellow)',
+                  opacity: 1,
+                }}
+              />
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--color-crumbs-yellow)',
+                  opacity: 0.25,
+                }}
+              />
+            </div>
           </motion.div>
         </motion.div>
       ) : (
@@ -488,6 +527,27 @@ export function Onboarding({ onFileSelected }: Props) {
             >
               ← back
             </motion.button>
+            {/* Page indicator dots */}
+            <div className="mt-3 flex items-center justify-center gap-1.5">
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--color-crumbs-ink)',
+                  opacity: 0.25,
+                }}
+              />
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--color-crumbs-ink)',
+                  opacity: 1,
+                }}
+              />
+            </div>
           </div>
         </motion.div>
       )}
