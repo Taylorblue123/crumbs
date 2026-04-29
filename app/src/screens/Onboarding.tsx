@@ -128,6 +128,13 @@ export function Onboarding({ onFileSelected }: Props) {
                     alt={current.type}
                     className="absolute inset-0 h-full w-full object-cover"
                   />
+                  {/* Gradient overlay for text readability */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: `linear-gradient(to bottom, transparent 40%, ${current.bg} 100%)`,
+                    }}
+                  />
                 </div>
 
                 {/* Lower — text panel */}
@@ -233,7 +240,7 @@ export function Onboarding({ onFileSelected }: Props) {
                 textTransform: 'uppercase',
               }}
             >
-              I WANT MY ROAST
+              DROP YOUR CRUMBS
             </motion.button>
           </motion.div>
         </motion.div>
@@ -265,10 +272,8 @@ export function Onboarding({ onFileSelected }: Props) {
                 letterSpacing: '-0.02em',
               }}
             >
-              The things you text yourself are{' '}
-              <span className="text-crumbs-yellow">personality crumbs</span>.
-              <br />
-              We read them.
+              Your texts reveal who you really are.{' '}
+              <span className="text-crumbs-yellow">We turn them into your roast.</span>
             </h2>
           </motion.div>
 
@@ -449,7 +454,7 @@ export function Onboarding({ onFileSelected }: Props) {
                 textTransform: 'uppercase',
               }}
             >
-              GET YOUR ROAST →
+              UPLOAD & GET ROASTED →
             </motion.button>
             <p
               className="mt-2 text-center text-crumbs-ink"
